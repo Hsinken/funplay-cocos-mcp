@@ -4,6 +4,26 @@ All notable changes to Funplay MCP for Cocos will be documented in this file.
 
 This project follows a simple changelog format inspired by [Keep a Changelog](https://keepachangelog.com/), and uses semantic versioning when releases are tagged.
 
+## [Unreleased]
+
+## [0.1.2] - 2026-04-30
+
+### Added
+
+- Added Node.js unit tests for MCP protocol negotiation, tool profile exports, tool execution errors, and project file path safety.
+
+### Changed
+
+- Updated the MCP initialize response to negotiate protocol version `2025-11-25` by default while retaining compatibility with older supported protocol versions.
+- Added `structuredContent` to tool call results when a tool returns structured JSON data.
+- Changed tool execution failures to return MCP tool errors instead of JSON-RPC internal errors, improving client-side self-correction.
+- Updated CI to run the new Node.js test suite.
+
+### Security
+
+- Restricted project file and asset-path resources to paths inside the active Cocos project root.
+- Added HTTP request body size limits and invalid `Origin` header rejection for the embedded MCP server.
+
 ## [0.1.1] - 2026-04-16
 
 ### Added

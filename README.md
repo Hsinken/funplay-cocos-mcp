@@ -199,6 +199,7 @@ Try a higher-level prompt in your AI client:
 - If the configured port is busy, the server automatically falls back to the next available port and the panel/client config use the actual running port.
 - The default `core` profile exposes 19 high-signal tools. Switch to `full` in the panel if you want all 67 tools exposed.
 - All exposed MCP tools execute directly. There is no extra approval toggle inside the Cocos extension.
+- File tools and `cocos://asset/path/...` resources are restricted to the active Cocos project root.
 - The recommended workflow is `execute_javascript` first, then focused helper tools for screenshots, diagnostics, assets, and inspection.
 - If you change the server port or tool exposure in the panel, the extension saves the config and restarts the server when needed.
 

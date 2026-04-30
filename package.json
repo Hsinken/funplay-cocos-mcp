@@ -1,13 +1,14 @@
 {
   "name": "funplay-cocos-mcp",
   "package_version": 2,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Embedded MCP server for Cocos Creator with scene script execution, project resources, prompts, and file/scene tools.",
   "author": "Funplay",
   "license": "MIT",
   "main": "browser.js",
   "scripts": {
-    "check": "node --check browser.js && node --check scene.js && node --check panel/index.js && node --check lib/assets.js && node --check lib/client-config.js && node --check lib/config.js && node --check lib/diagnostics.js && node --check lib/electron-tools.js && node --check lib/input.js && node --check lib/interaction-log.js && node --check lib/prompts.js && node --check lib/resources.js && node --check lib/screenshots.js && node --check lib/server.js && node --check lib/tool-registry.js && node --check lib/utils.js"
+    "check": "node --check browser.js && node --check scene.js && node --check panel/index.js && node --check lib/assets.js && node --check lib/client-config.js && node --check lib/config.js && node --check lib/diagnostics.js && node --check lib/electron-tools.js && node --check lib/input.js && node --check lib/interaction-log.js && node --check lib/path-safety.js && node --check lib/prompts.js && node --check lib/resources.js && node --check lib/screenshots.js && node --check lib/server.js && node --check lib/tool-registry.js && node --check lib/utils.js",
+    "test": "node --test"
   },
   "panels": {
     "default": {
