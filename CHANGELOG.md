@@ -6,6 +6,13 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-05-11
+
+### Fixed
+
+- Fixed CI test expectations after expanding the documented `core` and `full` tool profiles.
+- Aligned the latest release line with the current tested `main` branch state.
+
 ## [0.1.3] - 2026-05-11
 
 ### Added
