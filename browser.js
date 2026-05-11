@@ -87,6 +87,7 @@ class ExtensionService {
 
     this.toolRegistry = createToolRegistry({
       getRuntimeContext: runtimeContext,
+      getStatus: () => this.getStatus(),
       interactionLog: this.interactionLog,
       sceneBridge,
       editorExecutor: async (payload) => await this.executeEditorScript(payload, runtimeContext),
@@ -315,16 +316,24 @@ class ExtensionService {
       maxInteractionLogEntries: Number.isInteger(nextMaxEntries)
         ? Math.max(10, Math.min(500, nextMaxEntries))
         : this.config.maxInteractionLogEntries,
+      lastClientTargetId: partialConfig && partialConfig.lastClientTargetId
+        ? String(partialConfig.lastClientTargetId)
+        : this.config.lastClientTargetId,
     };
 
     const configPath = this.config.configPath;
     fs.writeFileSync(configPath, JSON.stringify(nextConfig, null, 2) + '\n', 'utf8');
     const wasRunning = Boolean(this.server && this.server.isRunning());
-    if (wasRunning) {
+    const requiresRestart = wasRunning && (
+      nextConfig.host !== this.config.host ||
+      nextConfig.port !== this.config.port ||
+      nextConfig.toolProfile !== this.config.toolProfile
+    );
+    if (requiresRestart) {
       await this.stopServer();
     }
     this.reloadRuntime();
-    if (wasRunning) {
+    if (requiresRestart) {
       await this.startServer();
     }
     return this.getPanelState();

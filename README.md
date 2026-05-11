@@ -197,7 +197,7 @@ Try a higher-level prompt in your AI client:
 - This extension is **Editor-only**. It is meant to automate Cocos Creator, not to add runtime dependencies to your final game build.
 - The MCP server listens on `http://127.0.0.1:8765/` by default.
 - If the configured port is busy, the server automatically falls back to the next available port and the panel/client config use the actual running port.
-- The default `core` profile exposes 19 high-signal tools. Switch to `full` in the panel if you want all 67 tools exposed.
+- The default `core` profile exposes 22 high-signal tools. Switch to `full` in the panel if you want all 70 tools exposed.
 - All exposed MCP tools execute directly. There is no extra approval toggle inside the Cocos extension.
 - File tools and `cocos://asset/path/...` resources are restricted to the active Cocos project root.
 - The recommended workflow is `execute_javascript` first, then focused helper tools for screenshots, diagnostics, assets, and inspection.
@@ -214,7 +214,7 @@ Try a higher-level prompt in your AI client:
 
 ## Highlights
 
-- **67 Built-in Tools** — Scene hierarchy, assets, UI creation, components, files, script diagnostics, screenshots, runtime control, and input simulation
+- **70 Built-in Tools** — Scene hierarchy, editor state, selection workflows, assets, UI creation, components, files, script diagnostics, screenshots, runtime control, and input simulation
 - **Primary Unified Tool** — `execute_javascript` supports both `scene` and `editor` contexts
 - **Resources & Prompts** — Live project resources plus reusable workflows like script fixing, scene validation, and playable prototype creation
 - **Cocos Panel UI** — A minimal `Funplay > MCP Server` panel for service management and MCP client setup
@@ -231,20 +231,20 @@ Funplay MCP for Cocos follows the same design principles as Funplay MCP for Unit
 | Embedded server | Built-in HTTP MCP server | Built-in HTTP MCP server |
 | Primary execution tool | `execute_javascript` | `execute_code` |
 | Primary language | JavaScript in scene/editor contexts | C# in Unity editor/runtime contexts |
-| Default profile | `core` with 19 tools | `core` focused tool profile |
-| Full profile | 67 tools | 79 tools |
+| Default profile | `core` with 22 tools | `core` focused tool profile |
+| Full profile | 70 tools | 79 tools |
 | Client setup | One-click config panel | One-click config window |
 
 ## MCP Capabilities
 
 The current package exposes four capability layers:
 
-- **Tools** — 19 tools in `core`, 67 tools in `full`
+- **Tools** — 22 tools in `core`, 70 tools in `full`
 - **Primary execution** — `execute_javascript` for scene/runtime and editor/browser automation
 - **Prompts** — `fix_script_errors`, `create_playable_prototype`, `scene_validation`, and `auto_wire_scene`
 - **Resources** — project context, scene summaries, current selection, script diagnostics, asset selection, and MCP interaction history
 
-The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_project_info`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
+The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_editor_state`, `get_selection`, `set_selection`, `get_project_info`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
 
 ## Built-in Resources
 
@@ -261,11 +261,12 @@ The default `core` set is intentionally small: `execute_javascript`, `execute_sc
 
 ## Built-in Tools
 
-Funplay MCP for Cocos currently ships with **67 tool functions** in the `full` profile:
+Funplay MCP for Cocos currently ships with **70 tool functions** in the `full` profile:
 
 | Category | Tools |
 |----------|-------|
 | **Script Execution** | `execute_javascript`, `execute_scene_script`, `execute_editor_script` |
+| **Editor State** | `get_editor_state`, `get_selection`, `set_selection`, `get_editor_selection` |
 | **Project & Scene** | `get_project_info`, `get_scene_info`, `get_hierarchy`, `find_nodes`, `inspect_node`, `list_scenes`, `open_scene`, `run_scene_asset` |
 | **Node Editing** | `create_node`, `delete_node`, `set_node_transform` |
 | **Assets & Prefabs** | `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `delete_asset`, `list_prefabs`, `instantiate_prefab`, `get_editor_selection` |

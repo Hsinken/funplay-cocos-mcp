@@ -6,6 +6,20 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-05-11
+
+### Added
+
+- Added `get_editor_state` as a compact structured editor-state summary tool.
+- Added `get_selection` and `set_selection` as explicit selection workflow tools for editor-side automation.
+- Added persistence for the selected one-click MCP client target in the Cocos panel configuration.
+
+### Changed
+
+- Expanded the default `core` profile from 19 tools to 22 tools by promoting editor-state and selection workflows.
+- Expanded the `full` profile from 67 tools to 70 tools.
+- Updated panel config persistence so changing the selected MCP client target no longer restarts the server unnecessarily.
+
 ## [0.1.2] - 2026-04-30
 
 ### Added

@@ -248,7 +248,8 @@ module.exports = Editor.Panel.define({
     },
     renderClientTargets() {
       const targets = (this.state && this.state.clientTargets) || [];
-      const selected = this.$.clientTargetSelect.value || (targets[0] && targets[0].id);
+      const preferred = this.state && this.state.config ? this.state.config.lastClientTargetId : '';
+      const selected = this.$.clientTargetSelect.value || preferred || (targets[0] && targets[0].id);
       this.$.clientTargetSelect.innerHTML = targets
         .map((target) => `<option value="${target.id}">${target.name}</option>`)
         .join('');
@@ -300,6 +301,7 @@ module.exports = Editor.Panel.define({
         toolProfile: this.$.profileSelect.value || 'core',
         autostart: Boolean(this.$.enabledInput.value),
         maxInteractionLogEntries: this.state && this.state.config ? this.state.config.maxInteractionLogEntries : 50,
+        lastClientTargetId: this.$.clientTargetSelect.value || 'claude_code',
       };
     },
     async handleEnableToggle() {
@@ -333,7 +335,10 @@ module.exports = Editor.Panel.define({
     this.$.portInput.addEventListener('change', () => this.persistConfig({ showOutput: true }));
     this.$.profileSelect.addEventListener('change', () => this.persistConfig({ showOutput: true }));
     this.$.clientTargetSelect.addEventListener('confirm', () => this.renderClientTargetStatus());
-    this.$.clientTargetSelect.addEventListener('change', () => this.renderClientTargetStatus());
+    this.$.clientTargetSelect.addEventListener('change', () => {
+      this.renderClientTargetStatus();
+      this.persistConfig();
+    });
     this.$.configureClientBtn.addEventListener('click', () => {
       const targetId = this.$.clientTargetSelect.value;
       if (!targetId) {
