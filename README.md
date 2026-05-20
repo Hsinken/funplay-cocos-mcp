@@ -69,7 +69,9 @@ The panel is intentionally small:
 
 - Enable or disable the MCP server
 - Change the server port
-- Switch tool exposure between `core` and `full`
+- Switch tool exposure between `core`, `full`, and `custom`
+- Check the installed version against the latest GitHub release
+- Tune tool exposure by category or individual tool
 - Configure AI clients with one click
 - Expand debug output only when needed
 
@@ -197,7 +199,9 @@ Try a higher-level prompt in your AI client:
 - This extension is **Editor-only**. It is meant to automate Cocos Creator, not to add runtime dependencies to your final game build.
 - The MCP server listens on `http://127.0.0.1:8765/` by default.
 - If the configured port is busy, the server automatically falls back to the next available port and the panel/client config use the actual running port.
-- The default `core` profile exposes 22 high-signal tools. Switch to `full` in the panel if you want all 70 tools exposed.
+- The default `core` profile exposes 28 high-signal tools. Switch to `full` for all 76 tools, or use `custom` to include/exclude tool categories and individual tools.
+- The panel includes a manual update check against the latest GitHub release.
+- Streamable HTTP responses follow the MCP transport requirements for `Accept`, `MCP-Protocol-Version`, JSON-RPC notifications/responses, and optional `Mcp-Session-Id` sessions.
 - All exposed MCP tools execute directly. There is no extra approval toggle inside the Cocos extension.
 - File tools and `cocos://asset/path/...` resources are restricted to the active Cocos project root.
 - The recommended workflow is `execute_javascript` first, then focused helper tools for screenshots, diagnostics, assets, and inspection.
@@ -208,16 +212,16 @@ Try a higher-level prompt in your AI client:
 - **`execute_javascript` First** — One high-flexibility JavaScript tool can orchestrate scene/runtime work and editor-side automation without flooding AI clients with too many narrow tool calls
 - **Embedded Cocos Extension** — No separate Python daemon or external bridge process is required for the Cocos-side plugin
 - **One-Click Client Configuration** — Configure Claude Code, Cursor, VS Code, Trae, Kiro, and Codex directly from Cocos Creator
-- **Project Context Built In** — Exposes live project, scene, selection, script diagnostics, and interaction-history resources
-- **Focused by Default, Full When Needed** — `core` reduces tool-list noise; `full` exposes every available tool
+- **Project Context Built In** — Exposes live project, scene, selection, script diagnostics, logs, and interaction-history resources
+- **Focused by Default, Full When Needed** — `core` reduces tool-list noise; `full` exposes every available tool; `custom` lets you tune by category or tool
 - **Visual Validation** — Scene/editor/preview screenshots and input simulation help AI verify UI and gameplay changes
 
 ## Highlights
 
-- **70 Built-in Tools** — Scene hierarchy, editor state, selection workflows, assets, UI creation, components, files, script diagnostics, screenshots, runtime control, and input simulation
+- **76 Built-in Tools** — Scene hierarchy, editor state, selection workflows, assets, UI creation, components, files, logs, script diagnostics, screenshots, runtime control, and input simulation
 - **Primary Unified Tool** — `execute_javascript` supports both `scene` and `editor` contexts
-- **Resources & Prompts** — Live project resources plus reusable workflows like script fixing, scene validation, and playable prototype creation
-- **Cocos Panel UI** — A minimal `Funplay > MCP Server` panel for service management and MCP client setup
+- **Resources & Prompts** — Live project/log resources plus reusable workflows like script fixing, scene validation, and playable prototype creation
+- **Cocos Panel UI** — A minimal `Funplay > MCP Server` panel for service management, update checks, tool exposure, and MCP client setup
 - **Screenshot and Input Support** — Capture editor/scene/game/preview screenshots and send Electron-level mouse/keyboard events
 - **Vendor Agnostic** — Works with any AI client that supports MCP over HTTP JSON-RPC
 
@@ -231,20 +235,20 @@ Funplay MCP for Cocos follows the same design principles as Funplay MCP for Unit
 | Embedded server | Built-in HTTP MCP server | Built-in HTTP MCP server |
 | Primary execution tool | `execute_javascript` | `execute_code` |
 | Primary language | JavaScript in scene/editor contexts | C# in Unity editor/runtime contexts |
-| Default profile | `core` with 22 tools | `core` focused tool profile |
-| Full profile | 70 tools | 79 tools |
+| Default profile | `core` with 28 tools | `core` focused tool profile |
+| Full profile | 76 tools plus `custom` exposure | 79 tools |
 | Client setup | One-click config panel | One-click config window |
 
 ## MCP Capabilities
 
 The current package exposes four capability layers:
 
-- **Tools** — 22 tools in `core`, 70 tools in `full`
+- **Tools** — 28 tools in `core`, 76 tools in `full`, plus `custom` include/exclude rules
 - **Primary execution** — `execute_javascript` for scene/runtime and editor/browser automation
 - **Prompts** — `fix_script_errors`, `create_playable_prototype`, `scene_validation`, and `auto_wire_scene`
-- **Resources** — project context, scene summaries, current selection, script diagnostics, asset selection, and MCP interaction history
+- **Resources** — project context, scene summaries, current selection, script diagnostics, asset selection, logs, and MCP interaction history
 
-The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_editor_state`, `get_selection`, `set_selection`, `get_project_info`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
+The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `set_selection`, `get_project_info`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
 
 ## Built-in Resources
 
@@ -257,16 +261,18 @@ The default `core` set is intentionally small: `execute_javascript`, `execute_sc
 | `cocos://selection/current` | Current editor selection |
 | `cocos://selection/asset` | Current selected asset |
 | `cocos://errors/scripts` | Script diagnostics |
+| `cocos://logs/editor` | Recent MCP runtime logs and tool interactions |
+| `cocos://logs/project` | Recent tails from common project log files |
 | `cocos://mcp/interactions` | Recent MCP interaction history |
 
 ## Built-in Tools
 
-Funplay MCP for Cocos currently ships with **70 tool functions** in the `full` profile:
+Funplay MCP for Cocos currently ships with **76 tool functions** in the `full` profile:
 
 | Category | Tools |
 |----------|-------|
 | **Script Execution** | `execute_javascript`, `execute_scene_script`, `execute_editor_script` |
-| **Editor State** | `get_editor_state`, `get_selection`, `set_selection`, `get_editor_selection` |
+| **Editor State** | `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `set_selection`, `get_editor_selection` |
 | **Project & Scene** | `get_project_info`, `get_scene_info`, `get_hierarchy`, `find_nodes`, `inspect_node`, `list_scenes`, `open_scene`, `run_scene_asset` |
 | **Node Editing** | `create_node`, `delete_node`, `set_node_transform` |
 | **Assets & Prefabs** | `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `delete_asset`, `list_prefabs`, `instantiate_prefab`, `get_editor_selection` |
@@ -275,7 +281,7 @@ Funplay MCP for Cocos currently ships with **70 tool functions** in the `full` p
 | **Camera** | `list_cameras`, `create_camera`, `set_camera_properties` |
 | **Animation** | `list_animations`, `add_animation_clip`, `play_animation`, `stop_animation` |
 | **Files** | `read_file`, `get_file_snippet`, `write_file`, `replace_in_file`, `search_files`, `list_directory`, `exists`, `refresh_assets` |
-| **Diagnostics** | `run_script_diagnostics`, `get_script_diagnostic_context` |
+| **Diagnostics & Logs** | `run_script_diagnostics`, `get_script_diagnostic_context`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene` |
 | **Runtime** | `get_runtime_state`, `pause_runtime`, `resume_runtime`, `set_time_scale` |
 | **Interaction** | `emit_node_event`, `simulate_button_click`, `invoke_component_method`, `simulate_mouse_click`, `simulate_mouse_drag`, `simulate_key_press`, `simulate_key_combo`, `simulate_preview_input` |
 | **Screenshots & Windows** | `capture_desktop_screenshot`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_game_screenshot`, `capture_preview_screenshot`, `list_editor_windows` |
@@ -313,6 +319,11 @@ Place `funplay-cocos-mcp.config.json` in the Cocos project root:
   "host": "127.0.0.1",
   "port": 8765,
   "toolProfile": "core",
+  "enabledToolCategories": [],
+  "disabledToolCategories": [],
+  "enabledTools": [],
+  "disabledTools": [],
+  "enableSessions": false,
   "autostart": true,
   "maxInteractionLogEntries": 50
 }
@@ -323,6 +334,8 @@ Environment variables are also supported:
 - `COCOS_MCP_HOST`
 - `COCOS_MCP_PORT`
 - `COCOS_MCP_PROFILE`
+
+`toolProfile: "custom"` starts from the `core` set, then adds `enabledToolCategories` / `enabledTools` and removes `disabledToolCategories` / `disabledTools`. `enableSessions` is off by default because this server does not need cross-request client state for normal editor automation.
 
 ## Architecture
 

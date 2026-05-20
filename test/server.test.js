@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const http = require('node:http');
 const test = require('node:test');
 const {
   MCP_PROTOCOL_VERSION,
@@ -8,9 +9,9 @@ const {
   SUPPORTED_PROTOCOL_VERSIONS,
 } = require('../lib/server');
 
-function createServer(toolRegistry = {}) {
+function createServer(toolRegistry = {}, config = {}) {
   return new McpServer({
-    config: { host: '127.0.0.1', port: 8765 },
+    config: { host: '127.0.0.1', port: 8765, ...config },
     toolRegistry: {
       listTools: () => [],
       callTool: async () => 'ok',
@@ -26,8 +27,42 @@ function createServer(toolRegistry = {}) {
       getPrompt: () => ({ messages: [] }),
     },
     interactionLog: { add() {} },
+    runtimeLog: { add() {} },
     serverName: 'test-server',
     serverVersion: '0.0.0-test',
+  });
+}
+
+function httpJson(port, payload, headers = {}) {
+  const body = payload === undefined ? '' : JSON.stringify(payload);
+  return new Promise((resolve, reject) => {
+    const request = http.request(
+      {
+        host: '127.0.0.1',
+        port,
+        method: 'POST',
+        path: '/',
+        headers: {
+          Accept: 'application/json, text/event-stream',
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body),
+          ...headers,
+        },
+      },
+      (response) => {
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => {
+          resolve({
+            statusCode: response.statusCode,
+            headers: response.headers,
+            body: Buffer.concat(chunks).toString('utf8'),
+          });
+        });
+      }
+    );
+    request.on('error', reject);
+    request.end(body);
   });
 }
 
@@ -125,4 +160,82 @@ test('unsupported protocol version headers are rejected when present after initi
 
   assert.equal(response.error.code, -32600);
   assert.match(response.error.message, /Unsupported MCP protocol version/);
+});
+
+test('streamable HTTP Accept headers must allow json and event-stream', () => {
+  const server = createServer();
+
+  assert.equal(server.validateAcceptHeader({ headers: { accept: 'application/json, text/event-stream' } }), null);
+  assert.equal(server.validateAcceptHeader({ headers: { accept: '*/*' } }), null);
+
+  const response = server.validateAcceptHeader({ headers: { accept: 'application/json' } });
+  assert.equal(response.error.code, -32600);
+  assert.match(response.error.message, /Accept header/);
+});
+
+test('JSON-RPC responses and notifications are classified for 202 handling', () => {
+  const server = createServer();
+
+  assert.equal(server.classifyJsonRpcMessage({ jsonrpc: '2.0', id: 1, result: {} }), 'response');
+  assert.equal(server.classifyJsonRpcMessage({ jsonrpc: '2.0', method: 'notifications/initialized' }), 'notification');
+  assert.equal(server.classifyJsonRpcMessage({ jsonrpc: '2.0', id: 1, method: 'tools/list' }), 'request');
+});
+
+test('session validation requires a known session when enabled', () => {
+  const server = createServer({}, { enableSessions: true });
+  server.sessions.add('abc123');
+
+  assert.equal(
+    server.validateSession(
+      { headers: { 'mcp-session-id': 'abc123' } },
+      { jsonrpc: '2.0', id: 1, method: 'tools/list' }
+    ),
+    null
+  );
+
+  const missing = server.validateSession(
+    { headers: {} },
+    { jsonrpc: '2.0', id: 1, method: 'tools/list' }
+  );
+  assert.equal(missing.statusCode, 400);
+
+  const unknown = server.validateSession(
+    { headers: { 'mcp-session-id': 'nope' } },
+    { jsonrpc: '2.0', id: 1, method: 'tools/list' }
+  );
+  assert.equal(unknown.statusCode, 404);
+});
+
+test('HTTP notifications return 202 Accepted with no body', async () => {
+  const server = createServer({}, { port: 0 });
+  await server.start();
+  try {
+    const response = await httpJson(server.getPort(), {
+      jsonrpc: '2.0',
+      method: 'notifications/initialized',
+    });
+
+    assert.equal(response.statusCode, 202);
+    assert.equal(response.body, '');
+  } finally {
+    await server.stop();
+  }
+});
+
+test('HTTP initialize can return an optional session id when sessions are enabled', async () => {
+  const server = createServer({}, { port: 0, enableSessions: true });
+  await server.start();
+  try {
+    const response = await httpJson(server.getPort(), {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: { protocolVersion: MCP_PROTOCOL_VERSION },
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.match(response.headers['mcp-session-id'], /^[\x21-\x7e]+$/);
+  } finally {
+    await server.stop();
+  }
 });

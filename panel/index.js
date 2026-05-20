@@ -19,7 +19,7 @@ module.exports = Editor.Panel.define({
       <header class="hero">
         <div>
           <h1>Funplay Cocos MCP</h1>
-          <p>Operate the embedded MCP server from Cocos Creator.</p>
+          <p id="versionText">Version</p>
         </div>
         <div class="status-pill" id="statusPill">Unknown</div>
       </header>
@@ -34,6 +34,7 @@ module.exports = Editor.Panel.define({
           </label>
           <ui-button id="restartBtn">Restart</ui-button>
           <ui-button id="copyUrlBtn">Copy URL</ui-button>
+          <ui-button id="checkUpdatesBtn">Check Updates</ui-button>
         </div>
         <div class="grid">
           <label>Server Port <ui-num-input id="portInput"></ui-num-input></label>
@@ -41,10 +42,32 @@ module.exports = Editor.Panel.define({
             <ui-select id="profileSelect">
               <option value="core">core</option>
               <option value="full">full</option>
+              <option value="custom">custom</option>
             </ui-select>
           </label>
+          <label class="checkbox-line">
+            <ui-checkbox id="sessionsInput"></ui-checkbox>
+            MCP Sessions
+          </label>
         </div>
+        <div id="updateStatus" class="client-status muted"></div>
         <p>Changes auto-save. Port/profile changes restart the server when needed.</p>
+      </section>
+
+      <section class="card">
+        <h2>Tool Manager</h2>
+        <div id="toolSummary" class="status-line muted"></div>
+        <div class="row tool-presets">
+          <ui-button id="useCoreBtn">Core</ui-button>
+          <ui-button id="useFullBtn">Full</ui-button>
+          <ui-button id="useCustomBtn">Custom</ui-button>
+        </div>
+        <div class="tool-config-grid">
+          <label>Enabled Categories <ui-textarea id="enabledCategoriesInput"></ui-textarea></label>
+          <label>Disabled Categories <ui-textarea id="disabledCategoriesInput"></ui-textarea></label>
+          <label>Enabled Tools <ui-textarea id="enabledToolsInput"></ui-textarea></label>
+          <label>Disabled Tools <ui-textarea id="disabledToolsInput"></ui-textarea></label>
+        </div>
       </section>
 
       <section class="card">
@@ -129,6 +152,12 @@ module.exports = Editor.Panel.define({
       gap: 8px;
       align-items: end;
     }
+    .tool-config-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
     label {
       display: flex;
       flex-direction: column;
@@ -138,6 +167,7 @@ module.exports = Editor.Panel.define({
     .checkbox-line {
       flex-direction: row;
       align-items: center;
+      min-height: 28px;
     }
     .checkbox-inline {
       padding-top: 0;
@@ -184,6 +214,9 @@ module.exports = Editor.Panel.define({
       width: 100%;
       min-height: 100px;
     }
+    .tool-config-grid ui-textarea {
+      min-height: 72px;
+    }
     pre {
       min-height: 120px;
       max-height: 220px;
@@ -203,12 +236,24 @@ module.exports = Editor.Panel.define({
   $: {
     root: '.mcp-root',
     statusPill: '#statusPill',
+    versionText: '#versionText',
     statusText: '#statusText',
     enabledInput: '#enabledInput',
     portInput: '#portInput',
     profileSelect: '#profileSelect',
+    sessionsInput: '#sessionsInput',
     restartBtn: '#restartBtn',
     copyUrlBtn: '#copyUrlBtn',
+    checkUpdatesBtn: '#checkUpdatesBtn',
+    updateStatus: '#updateStatus',
+    toolSummary: '#toolSummary',
+    useCoreBtn: '#useCoreBtn',
+    useFullBtn: '#useFullBtn',
+    useCustomBtn: '#useCustomBtn',
+    enabledCategoriesInput: '#enabledCategoriesInput',
+    disabledCategoriesInput: '#disabledCategoriesInput',
+    enabledToolsInput: '#enabledToolsInput',
+    disabledToolsInput: '#disabledToolsInput',
     clientTargetSelect: '#clientTargetSelect',
     configureClientBtn: '#configureClientBtn',
     clientTargetStatus: '#clientTargetStatus',
@@ -230,6 +275,7 @@ module.exports = Editor.Panel.define({
       const config = state.config || {};
       const isRunning = Boolean(status.running);
 
+      this.$.versionText.textContent = `Version ${status.version || 'unknown'}`;
       this.$.statusPill.textContent = isRunning ? 'Running' : 'Stopped';
       this.$.statusPill.classList.toggle('running', isRunning);
       this.$.statusPill.classList.toggle('stopped', !isRunning);
@@ -242,9 +288,46 @@ module.exports = Editor.Panel.define({
       this.$.enabledInput.value = Boolean(isRunning || config.autostart);
       this.$.portInput.value = Number(config.port || status.port || 8765);
       this.$.profileSelect.value = config.toolProfile || status.toolProfile || 'core';
+      this.$.sessionsInput.value = Boolean(config.enableSessions || status.enableSessions);
+      this.$.enabledCategoriesInput.value = this.formatList(config.enabledToolCategories);
+      this.$.disabledCategoriesInput.value = this.formatList(config.disabledToolCategories);
+      this.$.enabledToolsInput.value = this.formatList(config.enabledTools);
+      this.$.disabledToolsInput.value = this.formatList(config.disabledTools);
+      this.renderUpdateStatus();
+      this.renderToolSummary();
 
       this.$.clientConfigText.value = state.clientConfig ? state.clientConfig.codex : '';
       this.renderClientTargets();
+    },
+    formatList(value) {
+      return Array.isArray(value) ? value.join('\n') : '';
+    },
+    parseList(value) {
+      return String(value || '')
+        .split(/[\n,]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    },
+    renderUpdateStatus() {
+      const update = this.state && this.state.updateInfo;
+      if (!update) {
+        this.$.updateStatus.textContent = '';
+        return;
+      }
+      if (!update.ok) {
+        this.$.updateStatus.textContent = `Update check failed: ${update.error}`;
+        return;
+      }
+      this.$.updateStatus.textContent = update.updateAvailable
+        ? `Update available: ${update.latestVersion} (${update.releaseUrl})`
+        : `Up to date: ${update.currentVersion}`;
+    },
+    renderToolSummary() {
+      const catalog = (this.state && this.state.toolCatalog) || [];
+      const enabled = catalog.filter((tool) => tool.enabled);
+      const categories = Array.from(new Set(catalog.map((tool) => tool.category))).sort();
+      this.$.toolSummary.textContent =
+        `Enabled ${enabled.length}/${catalog.length} tools  |  Categories: ${categories.join(', ')}`;
     },
     renderClientTargets() {
       const targets = (this.state && this.state.clientTargets) || [];
@@ -299,6 +382,11 @@ module.exports = Editor.Panel.define({
         host: (this.state && this.state.config && this.state.config.host) || (this.state && this.state.status && this.state.status.host) || '127.0.0.1',
         port: Number(this.$.portInput.value || 8765),
         toolProfile: this.$.profileSelect.value || 'core',
+        enabledToolCategories: this.parseList(this.$.enabledCategoriesInput.value).map((item) => item.toLowerCase()),
+        disabledToolCategories: this.parseList(this.$.disabledCategoriesInput.value).map((item) => item.toLowerCase()),
+        enabledTools: this.parseList(this.$.enabledToolsInput.value),
+        disabledTools: this.parseList(this.$.disabledToolsInput.value),
+        enableSessions: Boolean(this.$.sessionsInput.value),
         autostart: Boolean(this.$.enabledInput.value),
         maxInteractionLogEntries: this.state && this.state.config ? this.state.config.maxInteractionLogEntries : 50,
         lastClientTargetId: this.$.clientTargetSelect.value || 'claude_code',
@@ -331,9 +419,35 @@ module.exports = Editor.Panel.define({
         .then(() => this.showOutput('Copied URL to clipboard.'))
         .catch(() => this.showOutput(text));
     });
+    this.$.checkUpdatesBtn.addEventListener('click', () => this.runAction(() => request('check-updates')));
     this.$.enabledInput.addEventListener('change', () => this.handleEnableToggle());
     this.$.portInput.addEventListener('change', () => this.persistConfig({ showOutput: true }));
     this.$.profileSelect.addEventListener('change', () => this.persistConfig({ showOutput: true }));
+    this.$.sessionsInput.addEventListener('change', () => this.persistConfig({ showOutput: true }));
+    this.$.enabledCategoriesInput.addEventListener('change', () => this.persistConfig({ showOutput: true }));
+    this.$.disabledCategoriesInput.addEventListener('change', () => this.persistConfig({ showOutput: true }));
+    this.$.enabledToolsInput.addEventListener('change', () => this.persistConfig({ showOutput: true }));
+    this.$.disabledToolsInput.addEventListener('change', () => this.persistConfig({ showOutput: true }));
+    this.$.useCoreBtn.addEventListener('click', () => {
+      this.$.profileSelect.value = 'core';
+      this.$.enabledCategoriesInput.value = '';
+      this.$.disabledCategoriesInput.value = '';
+      this.$.enabledToolsInput.value = '';
+      this.$.disabledToolsInput.value = '';
+      this.persistConfig({ showOutput: true });
+    });
+    this.$.useFullBtn.addEventListener('click', () => {
+      this.$.profileSelect.value = 'full';
+      this.$.enabledCategoriesInput.value = '';
+      this.$.disabledCategoriesInput.value = '';
+      this.$.enabledToolsInput.value = '';
+      this.$.disabledToolsInput.value = '';
+      this.persistConfig({ showOutput: true });
+    });
+    this.$.useCustomBtn.addEventListener('click', () => {
+      this.$.profileSelect.value = 'custom';
+      this.persistConfig({ showOutput: true });
+    });
     this.$.clientTargetSelect.addEventListener('confirm', () => this.renderClientTargetStatus());
     this.$.clientTargetSelect.addEventListener('change', () => {
       this.renderClientTargetStatus();

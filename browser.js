@@ -11,6 +11,8 @@ const { createToolRegistry } = require('./lib/tool-registry');
 const { ResourceProvider } = require('./lib/resources');
 const { PromptProvider } = require('./lib/prompts');
 const { InteractionLog } = require('./lib/interaction-log');
+const { RuntimeLog } = require('./lib/runtime-log');
+const { checkForUpdate } = require('./lib/update-checker');
 
 const EXTENSION_NAME = manifest.name || 'funplay-cocos-mcp';
 const LOG_PREFIX = '[Funplay Cocos MCP]';
@@ -25,26 +27,42 @@ class ExtensionService {
     this.resourceProvider = null;
     this.promptProvider = null;
     this.interactionLog = new InteractionLog();
+    this.runtimeLog = new RuntimeLog();
+    this.lastUpdateInfo = null;
+  }
+
+  log(level, message, details) {
+    if (this.runtimeLog && typeof this.runtimeLog.add === 'function') {
+      this.runtimeLog.add(level, message, details);
+    }
+    const output = `${LOG_PREFIX} ${message}`;
+    if (level === 'error') {
+      console.error(output);
+    } else if (level === 'warn') {
+      console.warn(output);
+    } else {
+      console.log(output);
+    }
   }
 
   load() {
-    console.log(`${LOG_PREFIX} Extension loading...`);
+    this.log('info', 'Extension loading...');
     this.reloadRuntime();
     if (this.config.autostart) {
-      console.log(`${LOG_PREFIX} Autostart is enabled, starting MCP server.`);
+      this.log('info', 'Autostart is enabled, starting MCP server.');
       return this.startServer();
     }
-    console.log(`${LOG_PREFIX} Autostart is disabled. MCP server is idle.`);
+    this.log('info', 'Autostart is disabled. MCP server is idle.');
     return this.getStatus();
   }
 
   unload() {
-    console.log(`${LOG_PREFIX} Extension unloading...`);
+    this.log('info', 'Extension unloading...');
     if (this.server) {
       this.server.stop();
       this.server = null;
     }
-    console.log(`${LOG_PREFIX} Extension unloaded.`);
+    this.log('info', 'Extension unloaded.');
   }
 
   openPanel() {
@@ -56,11 +74,13 @@ class ExtensionService {
 
   reloadRuntime() {
     this.config = loadConfig();
-    console.log(
-      `${LOG_PREFIX} Runtime config loaded: host=${this.config.host}, port=${this.config.port}, ` +
+    this.interactionLog = new InteractionLog(this.config.maxInteractionLogEntries);
+    this.runtimeLog = new RuntimeLog(this.config.maxInteractionLogEntries);
+    this.log(
+      'info',
+      `Runtime config loaded: host=${this.config.host}, port=${this.config.port}, ` +
       `profile=${this.config.toolProfile}, autostart=${this.config.autostart}`
     );
-    this.interactionLog = new InteractionLog(this.config.maxInteractionLogEntries);
     const sceneBridge = {
       call: async (method, payload) => {
         if (!global.Editor || !Editor.Message || typeof Editor.Message.request !== 'function') {
@@ -89,24 +109,26 @@ class ExtensionService {
       getRuntimeContext: runtimeContext,
       getStatus: () => this.getStatus(),
       interactionLog: this.interactionLog,
+      runtimeLog: this.runtimeLog,
       sceneBridge,
       editorExecutor: async (payload) => await this.executeEditorScript(payload, runtimeContext),
     });
-    this.resourceProvider = new ResourceProvider(runtimeContext, sceneBridge, this.interactionLog);
+    this.resourceProvider = new ResourceProvider(runtimeContext, sceneBridge, this.interactionLog, this.runtimeLog);
     this.promptProvider = new PromptProvider(runtimeContext);
   }
 
   async startServer() {
     if (this.server && this.server.isRunning()) {
-      console.log(`${LOG_PREFIX} Start requested but MCP server is already running at ${this.getStatus().url}`);
+      this.log('info', `Start requested but MCP server is already running at ${this.getStatus().url}`);
       return this.getStatus();
     }
 
-    console.log(`${LOG_PREFIX} Starting MCP server...`);
+    this.log('info', 'Starting MCP server...');
     this.reloadRuntime();
     this.server = new McpServer({
       config: this.config,
       interactionLog: this.interactionLog,
+      runtimeLog: this.runtimeLog,
       toolRegistry: this.toolRegistry,
       resourceProvider: this.resourceProvider,
       promptProvider: this.promptProvider,
@@ -115,30 +137,28 @@ class ExtensionService {
     });
 
     await this.server.start();
-    console.log(`${LOG_PREFIX} MCP server started at ${this.getStatus().url}`);
-    console.log(
-      `${LOG_PREFIX} If this tool saves you time, please consider giving it a Star on GitHub: ${REPOSITORY_URL}`
-    );
+    this.log('info', `MCP server started at ${this.getStatus().url}`);
+    this.log('info', `If this tool saves you time, please consider giving it a Star on GitHub: ${REPOSITORY_URL}`);
     return this.getStatus();
   }
 
   async stopServer() {
-    console.log(`${LOG_PREFIX} Stop requested.`);
+    this.log('info', 'Stop requested.');
     if (this.server) {
       await this.server.stop();
       this.server = null;
-      console.log(`${LOG_PREFIX} MCP server stopped.`);
+      this.log('info', 'MCP server stopped.');
     } else {
-      console.log(`${LOG_PREFIX} Stop requested but MCP server was not running.`);
+      this.log('info', 'Stop requested but MCP server was not running.');
     }
     return this.getStatus();
   }
 
   async restartServer() {
-    console.log(`${LOG_PREFIX} Restart requested.`);
+    this.log('info', 'Restart requested.');
     await this.stopServer();
     const status = await this.startServer();
-    console.log(`${LOG_PREFIX} Restart completed. MCP server running=${status.running}, url=${status.url}`);
+    this.log('info', `Restart completed. MCP server running=${status.running}, url=${status.url}`);
     return status;
   }
 
@@ -166,7 +186,13 @@ class ExtensionService {
       portFallbackActive: Boolean(fallbackInfo),
       portFallbackInfo: fallbackInfo,
       toolProfile: this.config.toolProfile,
+      enabledTools: this.config.enabledTools,
+      disabledTools: this.config.disabledTools,
+      enabledToolCategories: this.config.enabledToolCategories,
+      disabledToolCategories: this.config.disabledToolCategories,
+      enableSessions: this.config.enableSessions,
       autostart: this.config.autostart,
+      version: manifest.version || '0.0.0',
       projectPath: getProjectPath(),
       projectName: getProjectName(),
       cocosVersion: getCocosVersion(),
@@ -178,16 +204,22 @@ class ExtensionService {
     this.ensureRuntime();
     const status = this.getStatus();
     const tools = this.toolRegistry.listTools();
+    const toolCatalog = typeof this.toolRegistry.listToolCatalog === 'function'
+      ? this.toolRegistry.listToolCatalog()
+      : tools;
     const resources = this.resourceProvider.listResources();
     const prompts = this.promptProvider.listPrompts();
 
     return {
       status,
       tools,
+      toolCatalog,
       resources,
       prompts,
       recentInteractions: this.interactionLog.list(20),
+      recentRuntimeLogs: this.runtimeLog.list(20),
       config: this.config,
+      updateInfo: this.lastUpdateInfo,
       clientConfig: this.getClientConfig(),
       clientTargets: getTargetStatuses(this.config),
     };
@@ -200,8 +232,23 @@ class ExtensionService {
 
   async callToolFromPanel(name, args) {
     this.ensureRuntime();
-    console.log(`${LOG_PREFIX} Panel calling tool: ${name}`);
+    this.log('info', `Panel calling tool: ${name}`);
     return await this.toolRegistry.callTool(name, args || {});
+  }
+
+  async checkUpdates() {
+    this.ensureRuntime();
+    this.log('info', 'Checking GitHub for newer Funplay Cocos MCP releases.');
+    this.lastUpdateInfo = await checkForUpdate({ currentVersion: manifest.version || '0.0.0' });
+    if (this.lastUpdateInfo.ok) {
+      this.log(
+        'info',
+        `Update check completed: current=${this.lastUpdateInfo.currentVersion}, latest=${this.lastUpdateInfo.latestVersion || 'unknown'}`
+      );
+    } else {
+      this.log('warn', `Update check failed: ${this.lastUpdateInfo.error}`);
+    }
+    return this.getPanelState();
   }
 
   async executeEditorScript(payload, runtimeContext) {
@@ -252,7 +299,7 @@ class ExtensionService {
 
   async readResourceFromPanel(uri) {
     this.ensureRuntime();
-    console.log(`${LOG_PREFIX} Panel reading resource: ${uri}`);
+    this.log('info', `Panel reading resource: ${uri}`);
     return await this.resourceProvider.readResource(uri);
   }
 
@@ -273,11 +320,12 @@ class ExtensionService {
 
   configureClient(targetId) {
     this.ensureRuntime();
-    console.log(`${LOG_PREFIX} Configuring MCP client target: ${targetId}`);
+    this.log('info', `Configuring MCP client target: ${targetId}`);
     const effective = this.getEffectiveServerConnection();
     if (effective.port !== this.config.port) {
-      console.log(
-        `${LOG_PREFIX} Using actual running port ${effective.port} for MCP client configuration ` +
+      this.log(
+        'info',
+        `Using actual running port ${effective.port} for MCP client configuration ` +
         `(requested: ${this.config.port}).`
       );
     }
@@ -289,7 +337,7 @@ class ExtensionService {
       },
       targetId
     );
-    console.log(`${LOG_PREFIX} MCP client configured: ${result.name} -> ${result.configPath}`);
+    this.log('info', `MCP client configured: ${result.name} -> ${result.configPath}`);
     return {
       ...result,
       clientTargets: getTargetStatuses(this.config),
@@ -304,12 +352,37 @@ class ExtensionService {
     const nextMaxEntries = partialConfig && partialConfig.maxInteractionLogEntries !== undefined
       ? Number(partialConfig.maxInteractionLogEntries)
       : this.config.maxInteractionLogEntries;
+    const normalizeList = (value, fallback) => {
+      if (Array.isArray(value)) {
+        return value.map((item) => String(item || '').trim()).filter(Boolean);
+      }
+      if (typeof value === 'string') {
+        return value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean);
+      }
+      return fallback || [];
+    };
+    const normalizeCategories = (value, fallback) => normalizeList(value, fallback)
+      .map((item) => item.toLowerCase());
+    const nextProfile = partialConfig && partialConfig.toolProfile
+      ? (partialConfig.toolProfile === 'full' || partialConfig.toolProfile === 'custom' ? partialConfig.toolProfile : 'core')
+      : this.config.toolProfile;
     const nextConfig = {
       host: partialConfig && partialConfig.host ? String(partialConfig.host) : this.config.host,
       port: Number.isInteger(nextPort) && nextPort > 0 && nextPort <= 65535 ? nextPort : this.config.port,
-      toolProfile: partialConfig && partialConfig.toolProfile
-        ? (partialConfig.toolProfile === 'full' ? 'full' : 'core')
-        : this.config.toolProfile,
+      toolProfile: nextProfile,
+      enabledTools: normalizeList(partialConfig && partialConfig.enabledTools, this.config.enabledTools),
+      disabledTools: normalizeList(partialConfig && partialConfig.disabledTools, this.config.disabledTools),
+      enabledToolCategories: normalizeCategories(
+        partialConfig && partialConfig.enabledToolCategories,
+        this.config.enabledToolCategories
+      ),
+      disabledToolCategories: normalizeCategories(
+        partialConfig && partialConfig.disabledToolCategories,
+        this.config.disabledToolCategories
+      ),
+      enableSessions: partialConfig && typeof partialConfig.enableSessions === 'boolean'
+        ? partialConfig.enableSessions
+        : this.config.enableSessions,
       autostart: partialConfig && typeof partialConfig.autostart === 'boolean'
         ? partialConfig.autostart
         : this.config.autostart,
@@ -327,7 +400,12 @@ class ExtensionService {
     const requiresRestart = wasRunning && (
       nextConfig.host !== this.config.host ||
       nextConfig.port !== this.config.port ||
-      nextConfig.toolProfile !== this.config.toolProfile
+      nextConfig.toolProfile !== this.config.toolProfile ||
+      nextConfig.enableSessions !== this.config.enableSessions ||
+      JSON.stringify(nextConfig.enabledTools) !== JSON.stringify(this.config.enabledTools) ||
+      JSON.stringify(nextConfig.disabledTools) !== JSON.stringify(this.config.disabledTools) ||
+      JSON.stringify(nextConfig.enabledToolCategories) !== JSON.stringify(this.config.enabledToolCategories) ||
+      JSON.stringify(nextConfig.disabledToolCategories) !== JSON.stringify(this.config.disabledToolCategories)
     );
     if (requiresRestart) {
       await this.stopServer();
@@ -382,6 +460,9 @@ module.exports = {
     },
     callToolFromPanel(name, args) {
       return service.callToolFromPanel(name, args);
+    },
+    checkUpdates() {
+      return service.checkUpdates();
     },
     readResourceFromPanel(uri) {
       return service.readResourceFromPanel(uri);

@@ -6,6 +6,28 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-20
+
+### Added
+
+- Added a panel and tool-level update checker for comparing the installed extension version with the latest GitHub release.
+- Added `custom` tool exposure with per-category and per-tool include/exclude configuration.
+- Added `get_tool_catalog`, `check_for_updates`, `get_recent_logs`, `search_project_logs`, `clear_logs`, and `validate_scene`.
+- Added MCP log resources: `cocos://logs/editor` and `cocos://logs/project`.
+- Added in-memory runtime logs alongside the existing MCP interaction history.
+- Added optional Streamable HTTP session support via `enableSessions` and `Mcp-Session-Id`.
+
+### Changed
+
+- Expanded the default `core` profile from 22 tools to 28 tools.
+- Expanded the `full` profile from 70 tools to 76 tools.
+- Updated the Cocos panel to show installed version, update status, session toggle, and tool exposure controls.
+- Tightened Streamable HTTP behavior for `Accept` headers, JSON-RPC notifications/responses, `202 Accepted`, unsupported GET/SSE requests, and DELETE session termination.
+
+### Fixed
+
+- Improved project log tailing so trailing blank lines do not hide the last useful log entries.
+
 ## [0.1.4] - 2026-05-11
 
 ### Fixed
