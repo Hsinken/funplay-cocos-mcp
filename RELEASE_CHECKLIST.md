@@ -20,6 +20,7 @@ Use this checklist before publishing a new release of Funplay MCP for Cocos.
 - [ ] `npm run registry:validate` passes when `mcp-publisher` is available
 - [ ] `npm run release:package` creates `releases/<version>/`
 - [ ] `shasum -a 256 -c releases/<version>/SHA256SUMS.txt` passes
+- [ ] `releases/<version>/RELEASE_NOTES.md` is organized by change type, such as Added/Optimized/Changed/Fixed
 
 ## 3. Package Contents
 
@@ -30,7 +31,7 @@ Use this checklist before publishing a new release of Funplay MCP for Cocos.
 - [ ] The zip includes docs: `README.md`, `README_CN.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, and `LICENSE`
 - [ ] The zip does not contain `.git/`, `.github/`, `.DS_Store`, `node_modules/`, `Library/`, `Temp/`, `dist/`, `build/`, `test/`, or `scripts/`
 - [ ] `release-manifest.json` references the correct GitHub download URL
-- [ ] `SHA256SUMS.txt` includes the zip, manifest, and release README
+- [ ] `SHA256SUMS.txt` includes the zip, manifest, generated release notes, and release README
 
 ## 4. Cocos Smoke Test
 
@@ -72,7 +73,7 @@ Use this checklist before publishing a new release of Funplay MCP for Cocos.
 - [ ] Tag is `v<version>`
 - [ ] GitHub Release title is `v<version>`
 - [ ] GitHub Release includes the zip, manifest, checksum file, and release README
-- [ ] Public GitHub Release page renders the release notes and assets correctly
+- [ ] Public GitHub Release page uses `RELEASE_NOTES.md` and renders the release notes/assets correctly
 
 ## 8. Publish
 

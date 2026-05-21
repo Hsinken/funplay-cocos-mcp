@@ -6,6 +6,10 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed the GitHub Release workflow so release pages use generated changelog-style `RELEASE_NOTES.md` instead of the artifact installation README.
+
 ## [0.3.3] - 2026-05-20
 
 ### Added

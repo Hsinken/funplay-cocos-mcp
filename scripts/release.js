@@ -101,6 +101,7 @@ function main() {
     console.log(`- ${artifacts.zipName}`);
     console.log('- release-manifest.json');
     console.log('- SHA256SUMS.txt');
+    console.log('- RELEASE_NOTES.md');
     console.log('- README.md');
     return;
   }
@@ -270,9 +271,13 @@ function packageRelease(context) {
   const readmePath = path.join(releaseDir, 'README.md');
   fs.writeFileSync(readmePath, buildReleaseReadme(context, manifest));
 
+  const releaseNotesPath = path.join(releaseDir, 'RELEASE_NOTES.md');
+  fs.writeFileSync(releaseNotesPath, buildGitHubReleaseNotes(context, manifest));
+
   const checksums = [
     checksumLine(zipPath, zipName),
     checksumLine(manifestPath, 'release-manifest.json'),
+    checksumLine(releaseNotesPath, 'RELEASE_NOTES.md'),
     checksumLine(readmePath, 'README.md')
   ].join('');
   fs.writeFileSync(path.join(releaseDir, 'SHA256SUMS.txt'), checksums);
@@ -360,6 +365,95 @@ This folder contains the generated release artifacts for Funplay MCP for Cocos $
 shasum -a 256 -c SHA256SUMS.txt
 \`\`\`
 `;
+}
+
+function buildGitHubReleaseNotes(context, manifest) {
+  const sections = parseChangelogSections(context.changelogNotes);
+  const rendered = [];
+  const used = new Set();
+  const order = [
+    ['Added', '新增'],
+    ['Optimized', '优化'],
+    ['Changed', '修改'],
+    ['Fixed', '修复'],
+    ['Security', '安全'],
+    ['Deprecated', '弃用'],
+    ['Removed', '移除']
+  ];
+
+  for (const [sourceHeading, displayHeading] of order) {
+    const section = sections.find((item) => item.heading.toLowerCase() === sourceHeading.toLowerCase());
+    if (!section) {
+      continue;
+    }
+    used.add(section.heading);
+    rendered.push(`## ${displayHeading}`, '', ...section.lines, '');
+  }
+
+  for (const section of sections) {
+    if (used.has(section.heading)) {
+      continue;
+    }
+    rendered.push(`## ${section.heading}`, '', ...section.lines, '');
+  }
+
+  const zip = manifest.artifacts.extensionZip;
+  return [
+    `# Funplay MCP for Cocos ${context.tag}`,
+    '',
+    ...rendered,
+    '## 发布资产',
+    '',
+    `- \`${zip.file}\` - Cocos Creator extension package.`,
+    '- `release-manifest.json` - Machine-readable release metadata.',
+    '- `SHA256SUMS.txt` - SHA-256 checksums for release artifacts.',
+    '',
+    '## 校验',
+    '',
+    '```bash',
+    'shasum -a 256 -c SHA256SUMS.txt',
+    '```',
+    ''
+  ].join('\n');
+}
+
+function parseChangelogSections(notes) {
+  const sections = [];
+  let current = null;
+
+  for (const line of String(notes || '').split(/\r?\n/)) {
+    const heading = /^###\s+(.+?)\s*$/.exec(line);
+    if (heading) {
+      current = {
+        heading: heading[1].trim(),
+        lines: []
+      };
+      sections.push(current);
+      continue;
+    }
+
+    if (current) {
+      current.lines.push(line);
+    }
+  }
+
+  return sections
+    .map((section) => ({
+      heading: section.heading,
+      lines: trimBlankLines(section.lines)
+    }))
+    .filter((section) => section.lines.length > 0);
+}
+
+function trimBlankLines(lines) {
+  const trimmed = lines.slice();
+  while (trimmed.length && !trimmed[0].trim()) {
+    trimmed.shift();
+  }
+  while (trimmed.length && !trimmed[trimmed.length - 1].trim()) {
+    trimmed.pop();
+  }
+  return trimmed;
 }
 
 function validateArchivePaths(paths) {

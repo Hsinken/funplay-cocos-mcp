@@ -175,7 +175,7 @@ If creating a new release:
 gh release create v<version> \
   -R FunplayAI/funplay-cocos-mcp \
   --title "v<version>" \
-  --notes-file /path/to/release-notes.md \
+  --notes-file releases/<version>/RELEASE_NOTES.md \
   releases/<version>/Funplay.CocosMcp.v<version>.zip \
   releases/<version>/release-manifest.json \
   releases/<version>/SHA256SUMS.txt \
@@ -194,6 +194,14 @@ gh release upload v<version> \
   releases/<version>/README.md
 ```
 
+If the release body needs to be refreshed without replacing assets:
+
+```bash
+gh release edit v<version> \
+  -R FunplayAI/funplay-cocos-mcp \
+  --notes-file releases/<version>/RELEASE_NOTES.md
+```
+
 ### 7. Verify GitHub Release
 
 ```bash
@@ -202,7 +210,7 @@ gh release view v<version> \
   --json url,assets,isDraft,isPrerelease,publishedAt
 ```
 
-Confirm the release has all four assets.
+Confirm the release has all four assets and the public release body is organized by change type.
 
 ### 8. Publish To npm
 
