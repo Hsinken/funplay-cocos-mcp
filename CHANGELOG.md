@@ -8,7 +8,7 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ### Fixed
 
-- Fixed the GitHub Release workflow so release pages use generated changelog-style `RELEASE_NOTES.md` instead of the artifact installation README.
+- Fixed the GitHub Release workflow so release pages use generated English changelog-style `RELEASE_NOTES.md` instead of the artifact installation README.
 
 ## [0.3.3] - 2026-05-20
 
@@ -16,16 +16,24 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 - Added generated tool reference documentation in `docs/TOOLS.md`.
 - Added `docs:generate` and `docs:check` scripts to keep tool counts, profiles, categories, and descriptions synchronized with `lib/tool-registry.js`.
-- Added CI and release validation for generated tool documentation.
 - Added a read-only `GET /tools` debug endpoint with curl examples for quick local troubleshooting.
 - Added panel activity previews for recent tool calls and runtime logs.
 - Added panel curl copy actions for `/health` and `/tools`.
 
+### Optimized
+
+- Added CI and release validation for generated tool documentation.
+- Improved the MCP client config panel so the preview follows the selected client target.
+- Improved the panel information architecture around troubleshooting and maintenance: version, update status, tool profile, client config, recent calls, and logs.
+
 ### Changed
 
 - Refined tool category inference so `get_tool_catalog` is grouped with project/context tools.
-- Updated the MCP client config panel so the preview follows the selected client target.
 - Split file-system tools and asset refresh helpers into `lib/tools/files.js` as the first registry modularization step.
+
+### Fixed
+
+- No runtime bug fixes in this release; this release focuses on product polish, debugging ergonomics, and maintainability.
 
 ## [0.3.2] - 2026-05-20
 

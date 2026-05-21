@@ -372,13 +372,13 @@ function buildGitHubReleaseNotes(context, manifest) {
   const rendered = [];
   const used = new Set();
   const order = [
-    ['Added', '新增'],
-    ['Optimized', '优化'],
-    ['Changed', '修改'],
-    ['Fixed', '修复'],
-    ['Security', '安全'],
-    ['Deprecated', '弃用'],
-    ['Removed', '移除']
+    ['Added', 'Added'],
+    ['Optimized', 'Optimized'],
+    ['Changed', 'Changed'],
+    ['Fixed', 'Fixed'],
+    ['Security', 'Security'],
+    ['Deprecated', 'Deprecated'],
+    ['Removed', 'Removed']
   ];
 
   for (const [sourceHeading, displayHeading] of order) {
@@ -402,13 +402,19 @@ function buildGitHubReleaseNotes(context, manifest) {
     `# Funplay MCP for Cocos ${context.tag}`,
     '',
     ...rendered,
-    '## 发布资产',
+    '## Release Assets',
     '',
     `- \`${zip.file}\` - Cocos Creator extension package.`,
     '- `release-manifest.json` - Machine-readable release metadata.',
     '- `SHA256SUMS.txt` - SHA-256 checksums for release artifacts.',
     '',
-    '## 校验',
+    '## Publish Channels',
+    '',
+    '- GitHub Release: Cocos Creator extension zip package.',
+    `- npm: \`${context.packageJson.name}@${context.version}\`.`,
+    `- MCP Registry: \`${context.packageJson.mcpName}\` version \`${context.version}\`.`,
+    '',
+    '## Verify',
     '',
     '```bash',
     'shasum -a 256 -c SHA256SUMS.txt',
