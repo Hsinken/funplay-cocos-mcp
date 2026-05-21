@@ -1,4 +1,5 @@
 .DS_Store
+.mcpregistry_*
 node_modules/
 temp/
 Temp/
