@@ -6,6 +6,23 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-20
+
+### Added
+
+- Added MCP `outputSchema` and `annotations` to listed tools.
+- Added a standard structured tool result envelope with `ok`, `tool`, `callId`, `summary`, `data`, and follow-up `refs`.
+- Added prefab workflow tools: `inspect_prefab`, `validate_prefab_references`, `duplicate_prefab`, `edit_prefab_json`, `create_prefab_instance`, `inspect_prefab_instance`, `apply_prefab_instance`, and `revert_prefab_instance`.
+- Added `get_performance_snapshot` and expanded `validate_scene` with scene scale/performance-oriented counters.
+- Added project AI instruction tools: `list_project_instructions`, `read_project_instruction`, `write_project_instruction`, and `create_project_skill`.
+- Added tests for tool metadata, result envelopes, and project instruction helpers.
+
+### Changed
+
+- Expanded the default `core` profile from 28 tools to 34 tools.
+- Expanded the `full` profile from 76 tools to 89 tools.
+- Updated tool interaction logs to store concise result summaries from the standard envelope.
+
 ## [0.2.0] - 2026-05-20
 
 ### Added

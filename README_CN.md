@@ -199,9 +199,10 @@ url = "http://127.0.0.1:8765/"
 - 这是一个 **仅限 Editor** 的扩展，用于自动化 Cocos Creator，不会给最终游戏包添加运行时依赖。
 - MCP Server 默认监听 `http://127.0.0.1:8765/`。
 - 如果配置端口被占用，服务会自动回退到下一个可用端口，面板与一键客户端配置会使用实际运行端口。
-- 默认 `core` profile 暴露 28 个高频工具；如果需要完整工具集，可在面板切到 `full`，暴露全部 76 个工具；也可以用 `custom` 按分类或工具名增删。
+- 默认 `core` profile 暴露 34 个高频工具；如果需要完整工具集，可在面板切到 `full`，暴露全部 89 个工具；也可以用 `custom` 按分类或工具名增删。
 - 面板提供手动更新检查，会对比当前安装版本和 GitHub 最新 Release。
 - Streamable HTTP 响应已补齐 MCP 传输层要求，包括 `Accept`、`MCP-Protocol-Version`、JSON-RPC notification/response，以及可选 `Mcp-Session-Id` session。
+- 工具列表会包含 MCP `outputSchema` 和 `annotations`；结构化工具结果统一使用包含 `ok`、`tool`、`callId`、`summary`、`data`、`refs` 的标准 envelope。
 - 所有已暴露的 MCP 工具都会直接执行，Cocos 扩展里没有额外 approval 开关。
 - 文件工具和 `cocos://asset/path/...` 资源默认只能访问当前 Cocos 项目根目录内的路径。
 - 推荐工作流是优先使用 `execute_javascript`，再配合截图、诊断、资产、检查类工具。
@@ -218,7 +219,7 @@ url = "http://127.0.0.1:8765/"
 
 ## 核心特性
 
-- **76 个内置工具** — 覆盖场景层级、编辑器状态、选择工作流、资产、UI 创建、组件、文件、日志、脚本诊断、截图、运行态控制和输入模拟
+- **89 个内置工具** — 覆盖场景层级、编辑器状态、选择工作流、Prefab、资产、项目指令、UI 创建、组件、文件、日志、脚本诊断、截图、运行态控制和输入模拟
 - **统一主工具** — `execute_javascript` 同时支持 `scene` 和 `editor` 两种上下文
 - **Resources 与 Prompts** — 实时项目/日志资源，以及脚本修复、场景验证、可玩原型等可复用工作流
 - **Cocos 图形面板** — `Funplay > MCP Server` 提供服务管理、更新检查、工具暴露和 MCP 客户端配置
@@ -235,20 +236,20 @@ Funplay MCP for Cocos 延续 Funplay MCP for Unity 的设计原则，并针对 C
 | 内置服务 | 内嵌 HTTP MCP Server | 内嵌 HTTP MCP Server |
 | 主执行工具 | `execute_javascript` | `execute_code` |
 | 主语言 | 场景/编辑器上下文中的 JavaScript | Unity 编辑器/运行态中的 C# |
-| 默认工具集 | `core`，28 个工具 | 聚焦版 `core` 工具集 |
-| 完整工具集 | 76 个工具，并支持 `custom` 暴露 | 79 个工具 |
+| 默认工具集 | `core`，34 个工具 | 聚焦版 `core` 工具集 |
+| 完整工具集 | 89 个工具，并支持 `custom` 暴露 | 79 个工具 |
 | 客户端配置 | 一键配置面板 | 一键配置窗口 |
 
 ## MCP 能力结构
 
 当前包提供四层能力：
 
-- **Tools** — `core` 下 28 个工具，`full` 下 76 个工具，并支持 `custom` include/exclude 规则
+- **Tools** — `core` 下 34 个工具，`full` 下 89 个工具，并支持 `custom` include/exclude 规则
 - **Primary execution** — `execute_javascript` 用于场景/运行态和编辑器/browser 自动化
 - **Prompts** — `fix_script_errors`、`create_playable_prototype`、`scene_validation`、`auto_wire_scene`
 - **Resources** — 项目上下文、场景摘要、当前选择、脚本诊断、资产选择、日志和 MCP 交互历史
 
-当前默认 `core` 工具集刻意保持精简，只包含：`execute_javascript`、`execute_scene_script`、`execute_editor_script`、`get_editor_state`、`get_tool_catalog`、`check_for_updates`、`get_selection`、`set_selection`、`get_project_info`、`get_scene_info`、`get_hierarchy`、`list_scenes`、`open_scene`、`list_assets`、`inspect_asset`、`open_asset`、`select_asset`、`run_script_diagnostics`、`get_recent_logs`、`search_project_logs`、`clear_logs`、`validate_scene`、`get_script_diagnostic_context`、`get_runtime_state`、`capture_editor_screenshot`、`capture_scene_screenshot`、`capture_preview_screenshot`、`list_editor_windows`。
+当前默认 `core` 工具集刻意保持精简，只包含：`execute_javascript`、`execute_scene_script`、`execute_editor_script`、`get_editor_state`、`get_tool_catalog`、`check_for_updates`、`get_selection`、`list_project_instructions`、`read_project_instruction`、`set_selection`、`get_project_info`、`get_scene_info`、`get_hierarchy`、`list_scenes`、`open_scene`、`inspect_prefab`、`validate_prefab_references`、`inspect_prefab_instance`、`list_assets`、`inspect_asset`、`open_asset`、`select_asset`、`run_script_diagnostics`、`get_recent_logs`、`search_project_logs`、`clear_logs`、`validate_scene`、`get_performance_snapshot`、`get_script_diagnostic_context`、`get_runtime_state`、`capture_editor_screenshot`、`capture_scene_screenshot`、`capture_preview_screenshot`、`list_editor_windows`。
 
 ## 内置 Resources
 
@@ -267,21 +268,22 @@ Funplay MCP for Cocos 延续 Funplay MCP for Unity 的设计原则，并针对 C
 
 ## 内置工具
 
-Funplay MCP for Cocos 当前在 `full` profile 下提供 **76 个工具函数**：
+Funplay MCP for Cocos 当前在 `full` profile 下提供 **89 个工具函数**：
 
 | 分类 | 工具 |
 |------|------|
 | **脚本执行** | `execute_javascript`, `execute_scene_script`, `execute_editor_script` |
 | **编辑器状态** | `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `set_selection`, `get_editor_selection` |
+| **项目指令** | `list_project_instructions`, `read_project_instruction`, `write_project_instruction`, `create_project_skill` |
 | **项目与场景** | `get_project_info`, `get_scene_info`, `get_hierarchy`, `find_nodes`, `inspect_node`, `list_scenes`, `open_scene`, `run_scene_asset` |
 | **节点编辑** | `create_node`, `delete_node`, `set_node_transform` |
-| **资产与 Prefab** | `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `delete_asset`, `list_prefabs`, `instantiate_prefab`, `get_editor_selection` |
+| **资产与 Prefab** | `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `delete_asset`, `list_prefabs`, `inspect_prefab`, `validate_prefab_references`, `duplicate_prefab`, `edit_prefab_json`, `create_prefab_instance`, `inspect_prefab_instance`, `apply_prefab_instance`, `revert_prefab_instance`, `instantiate_prefab` |
 | **组件** | `list_components`, `inspect_component`, `add_component`, `remove_component`, `set_component_property`, `reset_component_property` |
 | **UI** | `create_canvas`, `create_label`, `create_button`, `create_sprite` |
 | **相机** | `list_cameras`, `create_camera`, `set_camera_properties` |
 | **动画** | `list_animations`, `add_animation_clip`, `play_animation`, `stop_animation` |
 | **文件** | `read_file`, `get_file_snippet`, `write_file`, `replace_in_file`, `search_files`, `list_directory`, `exists`, `refresh_assets` |
-| **诊断与日志** | `run_script_diagnostics`, `get_script_diagnostic_context`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene` |
+| **诊断与日志** | `run_script_diagnostics`, `get_script_diagnostic_context`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_performance_snapshot` |
 | **运行态** | `get_runtime_state`, `pause_runtime`, `resume_runtime`, `set_time_scale` |
 | **交互** | `emit_node_event`, `simulate_button_click`, `invoke_component_method`, `simulate_mouse_click`, `simulate_mouse_drag`, `simulate_key_press`, `simulate_key_combo`, `simulate_preview_input` |
 | **截图与窗口** | `capture_desktop_screenshot`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_game_screenshot`, `capture_preview_screenshot`, `list_editor_windows` |

@@ -199,9 +199,10 @@ Try a higher-level prompt in your AI client:
 - This extension is **Editor-only**. It is meant to automate Cocos Creator, not to add runtime dependencies to your final game build.
 - The MCP server listens on `http://127.0.0.1:8765/` by default.
 - If the configured port is busy, the server automatically falls back to the next available port and the panel/client config use the actual running port.
-- The default `core` profile exposes 28 high-signal tools. Switch to `full` for all 76 tools, or use `custom` to include/exclude tool categories and individual tools.
+- The default `core` profile exposes 34 high-signal tools. Switch to `full` for all 89 tools, or use `custom` to include/exclude tool categories and individual tools.
 - The panel includes a manual update check against the latest GitHub release.
 - Streamable HTTP responses follow the MCP transport requirements for `Accept`, `MCP-Protocol-Version`, JSON-RPC notifications/responses, and optional `Mcp-Session-Id` sessions.
+- Tool listings include MCP `outputSchema` and `annotations`; structured tool results use a standard envelope with `ok`, `tool`, `callId`, `summary`, `data`, and follow-up `refs`.
 - All exposed MCP tools execute directly. There is no extra approval toggle inside the Cocos extension.
 - File tools and `cocos://asset/path/...` resources are restricted to the active Cocos project root.
 - The recommended workflow is `execute_javascript` first, then focused helper tools for screenshots, diagnostics, assets, and inspection.
@@ -218,7 +219,7 @@ Try a higher-level prompt in your AI client:
 
 ## Highlights
 
-- **76 Built-in Tools** — Scene hierarchy, editor state, selection workflows, assets, UI creation, components, files, logs, script diagnostics, screenshots, runtime control, and input simulation
+- **89 Built-in Tools** — Scene hierarchy, editor state, selection workflows, prefabs, assets, project instructions, UI creation, components, files, logs, script diagnostics, screenshots, runtime control, and input simulation
 - **Primary Unified Tool** — `execute_javascript` supports both `scene` and `editor` contexts
 - **Resources & Prompts** — Live project/log resources plus reusable workflows like script fixing, scene validation, and playable prototype creation
 - **Cocos Panel UI** — A minimal `Funplay > MCP Server` panel for service management, update checks, tool exposure, and MCP client setup
@@ -235,20 +236,20 @@ Funplay MCP for Cocos follows the same design principles as Funplay MCP for Unit
 | Embedded server | Built-in HTTP MCP server | Built-in HTTP MCP server |
 | Primary execution tool | `execute_javascript` | `execute_code` |
 | Primary language | JavaScript in scene/editor contexts | C# in Unity editor/runtime contexts |
-| Default profile | `core` with 28 tools | `core` focused tool profile |
-| Full profile | 76 tools plus `custom` exposure | 79 tools |
+| Default profile | `core` with 34 tools | `core` focused tool profile |
+| Full profile | 89 tools plus `custom` exposure | 79 tools |
 | Client setup | One-click config panel | One-click config window |
 
 ## MCP Capabilities
 
 The current package exposes four capability layers:
 
-- **Tools** — 28 tools in `core`, 76 tools in `full`, plus `custom` include/exclude rules
+- **Tools** — 34 tools in `core`, 89 tools in `full`, plus `custom` include/exclude rules
 - **Primary execution** — `execute_javascript` for scene/runtime and editor/browser automation
 - **Prompts** — `fix_script_errors`, `create_playable_prototype`, `scene_validation`, and `auto_wire_scene`
 - **Resources** — project context, scene summaries, current selection, script diagnostics, asset selection, logs, and MCP interaction history
 
-The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `set_selection`, `get_project_info`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
+The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `list_project_instructions`, `read_project_instruction`, `set_selection`, `get_project_info`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `inspect_prefab`, `validate_prefab_references`, `inspect_prefab_instance`, `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_performance_snapshot`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
 
 ## Built-in Resources
 
@@ -267,21 +268,22 @@ The default `core` set is intentionally small: `execute_javascript`, `execute_sc
 
 ## Built-in Tools
 
-Funplay MCP for Cocos currently ships with **76 tool functions** in the `full` profile:
+Funplay MCP for Cocos currently ships with **89 tool functions** in the `full` profile:
 
 | Category | Tools |
 |----------|-------|
 | **Script Execution** | `execute_javascript`, `execute_scene_script`, `execute_editor_script` |
 | **Editor State** | `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `set_selection`, `get_editor_selection` |
+| **Project Instructions** | `list_project_instructions`, `read_project_instruction`, `write_project_instruction`, `create_project_skill` |
 | **Project & Scene** | `get_project_info`, `get_scene_info`, `get_hierarchy`, `find_nodes`, `inspect_node`, `list_scenes`, `open_scene`, `run_scene_asset` |
 | **Node Editing** | `create_node`, `delete_node`, `set_node_transform` |
-| **Assets & Prefabs** | `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `delete_asset`, `list_prefabs`, `instantiate_prefab`, `get_editor_selection` |
+| **Assets & Prefabs** | `list_assets`, `inspect_asset`, `open_asset`, `select_asset`, `delete_asset`, `list_prefabs`, `inspect_prefab`, `validate_prefab_references`, `duplicate_prefab`, `edit_prefab_json`, `create_prefab_instance`, `inspect_prefab_instance`, `apply_prefab_instance`, `revert_prefab_instance`, `instantiate_prefab` |
 | **Components** | `list_components`, `inspect_component`, `add_component`, `remove_component`, `set_component_property`, `reset_component_property` |
 | **UI** | `create_canvas`, `create_label`, `create_button`, `create_sprite` |
 | **Camera** | `list_cameras`, `create_camera`, `set_camera_properties` |
 | **Animation** | `list_animations`, `add_animation_clip`, `play_animation`, `stop_animation` |
 | **Files** | `read_file`, `get_file_snippet`, `write_file`, `replace_in_file`, `search_files`, `list_directory`, `exists`, `refresh_assets` |
-| **Diagnostics & Logs** | `run_script_diagnostics`, `get_script_diagnostic_context`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene` |
+| **Diagnostics & Logs** | `run_script_diagnostics`, `get_script_diagnostic_context`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_performance_snapshot` |
 | **Runtime** | `get_runtime_state`, `pause_runtime`, `resume_runtime`, `set_time_scale` |
 | **Interaction** | `emit_node_event`, `simulate_button_click`, `invoke_component_method`, `simulate_mouse_click`, `simulate_mouse_drag`, `simulate_key_press`, `simulate_key_combo`, `simulate_preview_input` |
 | **Screenshots & Windows** | `capture_desktop_screenshot`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_game_screenshot`, `capture_preview_screenshot`, `list_editor_windows` |

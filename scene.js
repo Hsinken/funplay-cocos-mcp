@@ -308,6 +308,97 @@ function findComponentsByClass(componentClass) {
   return results;
 }
 
+function getPrefabInfo(node) {
+  const prefab = node && node._prefab;
+  if (!prefab) {
+    return {
+      linked: false,
+    };
+  }
+
+  const asset = prefab.asset || prefab._asset || null;
+  return {
+    linked: Boolean(asset || prefab.fileId || prefab.root),
+    fileId: prefab.fileId || '',
+    asset: asset
+      ? {
+          name: asset.name || '',
+          uuid: asset.uuid || asset._uuid || '',
+        }
+      : null,
+    instance: prefab.instance ? plain(prefab.instance) : null,
+    sync: prefab.sync,
+    rawKeys: Object.keys(prefab).slice(0, 50),
+  };
+}
+
+function collectSceneStats() {
+  const stats = {
+    nodeCount: 0,
+    activeNodeCount: 0,
+    inactiveNodeCount: 0,
+    maxDepth: 0,
+    componentCount: 0,
+    componentsByType: {},
+    prefabInstanceCount: 0,
+    uiTransformCount: 0,
+    canvasCount: 0,
+    cameraCount: 0,
+    labelCount: 0,
+    spriteCount: 0,
+    buttonCount: 0,
+  };
+
+  function visit(node, depth) {
+    if (node !== getScene()) {
+      stats.nodeCount += 1;
+      stats.maxDepth = Math.max(stats.maxDepth, depth);
+      if (node.active) stats.activeNodeCount += 1;
+      else stats.inactiveNodeCount += 1;
+      if (node._prefab) stats.prefabInstanceCount += 1;
+    }
+
+    for (const component of node.components || []) {
+      const name = component && component.constructor ? component.constructor.name : 'UnknownComponent';
+      stats.componentCount += 1;
+      stats.componentsByType[name] = (stats.componentsByType[name] || 0) + 1;
+      if (component instanceof UITransform) stats.uiTransformCount += 1;
+      if (component instanceof Canvas) stats.canvasCount += 1;
+      if (component instanceof Camera) stats.cameraCount += 1;
+      if (component instanceof Label) stats.labelCount += 1;
+      if (component instanceof Sprite) stats.spriteCount += 1;
+      if (component instanceof Button) stats.buttonCount += 1;
+    }
+
+    for (const child of node.children) {
+      visit(child, depth + 1);
+    }
+  }
+
+  visit(getScene(), 0);
+  return stats;
+}
+
+function buildSceneWarnings(stats) {
+  const warnings = [];
+  if (stats.nodeCount === 0) {
+    warnings.push({ severity: 'warn', code: 'empty_scene', message: 'The active scene has no child nodes.' });
+  }
+  if (stats.cameraCount === 0) {
+    warnings.push({ severity: 'warn', code: 'missing_camera', message: 'No Camera component was found in the active scene.' });
+  }
+  if (stats.nodeCount > 500) {
+    warnings.push({ severity: 'info', code: 'large_node_count', message: `Scene has ${stats.nodeCount} nodes.` });
+  }
+  if (stats.maxDepth > 12) {
+    warnings.push({ severity: 'info', code: 'deep_hierarchy', message: `Scene hierarchy depth is ${stats.maxDepth}.` });
+  }
+  if (stats.labelCount > 80) {
+    warnings.push({ severity: 'info', code: 'many_labels', message: `Scene has ${stats.labelCount} Label components.` });
+  }
+  return warnings;
+}
+
 function getScheduler() {
   return typeof director.getScheduler === 'function' ? director.getScheduler() : null;
 }
@@ -1146,6 +1237,45 @@ exports.methods = {
       paused: typeof director.isPaused === 'function' ? director.isPaused() : false,
       timeScale: scheduler && typeof scheduler.getTimeScale === 'function' ? scheduler.getTimeScale() : 1,
       totalFrames: typeof director.getTotalFrames === 'function' ? director.getTotalFrames() : undefined,
+    };
+  },
+
+  async getPerformanceSnapshot() {
+    const scheduler = getScheduler();
+    const stats = collectSceneStats();
+    const memory = typeof performance !== 'undefined' && performance.memory
+      ? {
+          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          usedJSHeapSize: performance.memory.usedJSHeapSize,
+        }
+      : null;
+
+    return {
+      sceneName: getScene().name,
+      runtime: {
+        paused: typeof director.isPaused === 'function' ? director.isPaused() : false,
+        timeScale: scheduler && typeof scheduler.getTimeScale === 'function' ? scheduler.getTimeScale() : 1,
+        totalFrames: typeof director.getTotalFrames === 'function' ? director.getTotalFrames() : undefined,
+      },
+      stats,
+      memory,
+      warnings: buildSceneWarnings(stats),
+    };
+  },
+
+  async getPrefabInstanceInfo(options = {}) {
+    const node = findNode(options);
+    if (!node) {
+      throw new Error('Target node was not found.');
+    }
+    return {
+      node: {
+        name: node.name,
+        path: getNodePath(node),
+        uuid: node.uuid,
+      },
+      prefab: getPrefabInfo(node),
     };
   },
 
