@@ -8,6 +8,7 @@
     <a href="#"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
     <a href="#"><img src="https://img.shields.io/badge/MCP-Compatible-green" alt="MCP Compatible"></a>
     <a href="#"><img src="https://img.shields.io/badge/Platform-Editor%20Only-orange" alt="Editor Only"></a>
+    <a href="https://store.cocos.com/app/detail/8913"><img src="https://img.shields.io/badge/Cocos%20Store-Install-brightgreen" alt="Install from Cocos Store"></a>
   </p>
   <p align="center">
     <a href="./README_CN.md">中文</a> | English
@@ -41,7 +42,9 @@ If you just want to connect quickly, do these three things:
 
 ### 1. Install as a Cocos Creator Extension
 
-Clone or copy this repository into your Cocos project extension directory:
+Recommended install: use the official [Cocos Store page](https://store.cocos.com/app/detail/8913) and install the extension into your target Cocos Creator project.
+
+For local development or unreleased builds, clone or copy this repository into your Cocos project extension directory:
 
 ```bash
 cd /path/to/your-cocos-project
