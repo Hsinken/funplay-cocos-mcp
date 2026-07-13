@@ -6,6 +6,21 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-07-12
+
+### Added
+
+- Added `create_scene` to the default `core` profile for creating an empty scene or copying the active scene directly to an assets path without an interactive save dialog.
+
+### Optimized
+
+- Expanded the default `core` profile to 38 tools and the `full` profile to 103 tools, with synchronized English, Chinese, and generated tool documentation.
+
+### Fixed
+
+- Fixed `run_script_diagnostics` returning `spawn EINVAL` on Windows by running the TypeScript compiler script through Node instead of launching `tsc.cmd` directly.
+- Fixed TypeScript diagnostics inside Cocos Creator incorrectly treating the Creator executable as a normal Node runtime, which could report a false successful result without running `tsc`.
+
 ## [0.4.1] - 2026-07-02
 
 ### Added

@@ -13,6 +13,7 @@ const {
   assetManager,
   instantiate,
   Prefab,
+  Scene,
   SceneAsset,
   js,
   Component,
@@ -1013,6 +1014,49 @@ exports.methods = {
     } finally {
       if (root && typeof root.destroy === 'function') {
         root.destroy();
+      }
+    }
+  },
+
+  async serializeScene(options = {}) {
+    const mode = String(options.mode || 'empty').trim().toLowerCase();
+    if (mode !== 'empty' && mode !== 'current') {
+      throw new Error("mode must be either 'empty' or 'current'.");
+    }
+
+    const sceneName = String(options.sceneName || 'NewScene').trim() || 'NewScene';
+    const source = mode === 'current' ? getScene() : null;
+    const scene = source || new Scene(sceneName);
+    const originalName = source ? source.name : '';
+    const asset = new SceneAsset();
+
+    try {
+      scene.name = sceneName;
+      asset.name = sceneName;
+      asset.scene = scene;
+
+      const serialize = getCceSerializer();
+      const serialized = serialize(asset);
+      const content = typeof serialized === 'string'
+        ? serialized
+        : JSON.stringify(serialized, null, 2);
+
+      JSON.parse(content);
+      return {
+        serialized: true,
+        mode,
+        source: source
+          ? { name: originalName, uuid: source.uuid, childCount: source.children.length }
+          : null,
+        scene: { name: scene.name, childCount: scene.children.length },
+        content,
+      };
+    } finally {
+      asset.scene = null;
+      if (source) {
+        source.name = originalName;
+      } else if (scene && typeof scene.destroy === 'function') {
+        scene.destroy();
       }
     }
   },

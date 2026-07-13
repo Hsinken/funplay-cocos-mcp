@@ -23,7 +23,7 @@ function createRegistry(profile, projectPath = path.resolve('/tmp/funplay-cocos-
 
 test('core profile exposes the documented focused tool set', () => {
   const tools = createRegistry('core').listTools();
-  assert.equal(tools.length, 37);
+  assert.equal(tools.length, 38);
   assert.equal(tools.some((tool) => tool.name === 'execute_javascript'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_editor_state'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_tool_catalog'), true);
@@ -31,6 +31,7 @@ test('core profile exposes the documented focused tool set', () => {
   assert.equal(tools.some((tool) => tool.name === 'inspect_asset_dependencies'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_build_status'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_performance_snapshot'), true);
+  assert.equal(tools.some((tool) => tool.name === 'create_scene'), true);
   assert.equal(tools.some((tool) => tool.name === 'list_project_instructions'), true);
   assert.equal(tools.some((tool) => tool.name === 'set_selection'), true);
   assert.equal(tools.some((tool) => tool.name === 'write_file'), false);
@@ -38,7 +39,7 @@ test('core profile exposes the documented focused tool set', () => {
 
 test('full profile exposes all built-in tools', () => {
   const tools = createRegistry('full').listTools();
-  assert.equal(tools.length, 102);
+  assert.equal(tools.length, 103);
   assert.equal(tools.some((tool) => tool.name === 'write_file'), true);
   assert.equal(tools.some((tool) => tool.name === 'edit_prefab_json'), true);
   assert.equal(tools.some((tool) => tool.name === 'create_prefab_from_node'), true);
@@ -46,9 +47,48 @@ test('full profile exposes all built-in tools', () => {
   assert.equal(tools.some((tool) => tool.name === 'create_cocos_mcp_project_skill'), true);
   assert.equal(tools.some((tool) => tool.name === 'bind_button_click_event'), true);
   assert.equal(tools.some((tool) => tool.name === 'open_build_panel'), true);
+  assert.equal(tools.some((tool) => tool.name === 'create_scene'), true);
   assert.equal(tools.some((tool) => tool.name === 'broadcast_editor_message'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_editor_state'), true);
   assert.equal(tools.some((tool) => tool.name === 'set_selection'), true);
+});
+
+test('create_scene serializes and persists a scene without an interactive save dialog', async (t) => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'funplay-cocos-scene-'));
+  t.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(tmp, 'assets'), { recursive: true });
+
+  const calls = [];
+  const registry = createRegistry('full', tmp, {}, {
+    sceneBridge: {
+      call: async (method, payload) => {
+        calls.push({ method, payload });
+        return {
+          mode: payload.mode,
+          source: null,
+          scene: { name: payload.sceneName, childCount: 0 },
+          content: JSON.stringify([
+            { __type__: 'cc.SceneAsset', _name: payload.sceneName, scene: { __id__: 1 } },
+            { __type__: 'cc.Scene', _name: payload.sceneName, _children: [] },
+          ]),
+        };
+      },
+    },
+  });
+
+  const result = await registry.callToolDetailed('create_scene', {
+    target: 'Scenes/GeneratedLevel',
+    openAfterCreate: false,
+  });
+
+  assert.deepEqual(calls[0], {
+    method: 'serializeScene',
+    payload: { mode: 'empty', sceneName: 'GeneratedLevel' },
+  });
+  assert.equal(result.value.data.created, true);
+  assert.equal(result.value.data.path, 'assets/Scenes/GeneratedLevel.scene');
+  assert.equal(result.value.data.opened, null);
+  assert.equal(fs.existsSync(path.join(tmp, 'assets', 'Scenes', 'GeneratedLevel.scene')), true);
 });
 
 test('tool definitions include MCP outputSchema and annotations', () => {
