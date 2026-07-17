@@ -8,6 +8,7 @@ Use this checklist before publishing a new release of Funplay MCP for Cocos.
 - [ ] No tracked local junk is present (`.DS_Store`, `.idea/`, `node_modules/`, `Library/`, `Temp/`, `dist/`, `build/`)
 - [ ] `package.json` version matches the intended release
 - [ ] `CHANGELOG.md` includes the release notes for the target version
+- [ ] Every GitHub issue resolved by the release is referenced by number and link in `CHANGELOG.md`
 - [ ] `README.md` and `README_CN.md` match the current product behavior
 
 ## 2. Automated Verification
@@ -75,6 +76,7 @@ Use this checklist before publishing a new release of Funplay MCP for Cocos.
 - [ ] GitHub Release title is `v<version>`
 - [ ] GitHub Release includes the zip, manifest, checksum file, and release README
 - [ ] Public GitHub Release page uses `RELEASE_NOTES.md` and renders the release notes/assets correctly
+- [ ] Public GitHub Release notes link every GitHub issue resolved by the release
 
 ## 8. Publish
 

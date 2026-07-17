@@ -18,7 +18,7 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ### Fixed
 
-- Fixed preview launch on Cocos Creator 3.8.8 by replacing the nonexistent `preview.start`, `preview.open-preview`, and `builder.preview` messages.
+- Fixed [#3](https://github.com/FunplayAI/funplay-cocos-mcp/issues/3): restored preview launch on Cocos Creator 3.8.8 by replacing the nonexistent `preview.start`, `preview.open-preview`, and `builder.preview` messages.
 
 ## [0.4.2] - 2026-07-12
 

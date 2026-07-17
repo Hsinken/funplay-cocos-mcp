@@ -82,6 +82,13 @@ Use semantic versions such as `0.3.1`, and keep release headings in this format:
 ## [0.3.1] - 2026-05-20
 ```
 
+When a release resolves a GitHub issue, reference it directly in the relevant
+changelog bullet so the generated GitHub Release notes preserve traceability:
+
+```markdown
+- Fixed [#123](https://github.com/FunplayAI/funplay-cocos-mcp/issues/123): describe the resolved problem.
+```
+
 ### 3. Run Release Verification
 
 ```bash
