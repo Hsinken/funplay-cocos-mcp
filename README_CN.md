@@ -238,7 +238,7 @@ curl http://127.0.0.1:8765/tools
 - MCP Server 默认监听 `http://127.0.0.1:8765/`。
 - 如果配置端口被占用，服务会先通过项目身份识别同项目已有 listener；无法确认同项目时才会自动回退到下一个可用端口，面板与一键客户端配置会使用实际运行端口。
 - `GET /health` 和 `GET /tools` 是只读调试端点，方便不用 MCP 客户端也能快速检查本地服务。
-- 默认 `core` profile 暴露 38 个高频工具；如果需要完整工具集，可在面板切到 `full`，暴露全部 103 个工具；也可以用 `custom` 按分类或工具名增删。
+- 默认 `core` profile 暴露 39 个高频工具；如果需要完整工具集，可在面板切到 `full`，暴露全部 105 个工具；也可以用 `custom` 按分类或工具名增删。
 - 面板会自动检查 GitHub Release，也支持手动检查。
 - 一键更新会下载 GitHub Release zip，校验 `SHA256SUMS.txt`，备份当前扩展目录，替换插件文件，并在 Cocos package API 支持时 reload 扩展；如果当前 Cocos 版本没有可靠 reload 能力，安装后重启 Cocos Creator 即可。Git worktree 和 symlink 安装会保留为手动 `git pull` 或手动替换包，避免覆盖开发目录。
 - Streamable HTTP 响应已补齐 MCP 传输层要求，包括 `Accept`、`MCP-Protocol-Version`、JSON-RPC notification/response，以及可选 `Mcp-Session-Id` session。
@@ -260,7 +260,7 @@ curl http://127.0.0.1:8765/tools
 
 ## 核心特性
 
-- **103 个内置工具** — 覆盖场景层级、编辑器状态、选择工作流、Prefab、资产、资产依赖、项目指令、UI 创建、组件、文件、日志、脚本诊断、截图、运行态控制、构建/预览辅助、编辑器偏好、事件绑定和输入模拟
+- **105 个内置工具** — 覆盖场景层级、编辑器状态、选择工作流、Prefab、资产、资产依赖、项目指令、UI 创建、组件、文件、日志、脚本诊断、截图、运行态控制、构建/预览辅助、编辑器偏好、事件绑定和输入模拟
 - **统一主工具** — `execute_javascript` 同时支持 `scene` 和 `editor` 两种上下文
 - **Resources 与 Prompts** — 实时项目/日志资源，以及脚本修复、场景验证、可玩原型等可复用工作流
 - **Cocos 图形面板** — `Funplay > MCP Server` 是精简 Dashboard，并提供 Tool Exposure、MCP Settings、Activity 子窗口承载复杂工作流
@@ -277,22 +277,34 @@ Funplay MCP for Cocos 延续 Funplay MCP for Unity 的设计原则，并针对 C
 | 内置服务 | 内嵌 HTTP MCP Server | 内嵌 HTTP MCP Server |
 | 主执行工具 | `execute_javascript` | `execute_code` |
 | 主语言 | 场景/编辑器上下文中的 JavaScript | Unity 编辑器/运行态中的 C# |
-| 默认工具集 | `core`，38 个工具 | 聚焦版 `core` 工具集 |
-| 完整工具集 | 103 个工具，并支持 `custom` 暴露 | 79 个工具 |
+| 默认工具集 | `core`，39 个工具 | 聚焦版 `core` 工具集 |
+| 完整工具集 | 105 个工具，并支持 `custom` 暴露 | 79 个工具 |
 | 客户端配置 | 一键配置面板 | 一键配置窗口 |
 
 ## MCP 能力结构
 
 当前包提供四层能力：
 
-- **Tools** — `core` 下 38 个工具，`full` 下 103 个工具，并支持 `custom` include/exclude 规则和命名工具 profile
+- **Tools** — `core` 下 39 个工具，`full` 下 105 个工具，并支持 `custom` include/exclude 规则和命名工具 profile
 - **Primary execution** — `execute_javascript` 用于场景/运行态和编辑器/browser 自动化
 - **Prompts** — `fix_script_errors`、`create_playable_prototype`、`scene_validation`、`auto_wire_scene`
 - **Resources** — 项目上下文、场景摘要、当前选择、脚本诊断、资产选择、日志和 MCP 交互历史
 
 自动生成的工具参考文档见 [docs/TOOLS.md](./docs/TOOLS.md)，里面包含工具分类、profile 和读写/变更提示。
 
-当前默认 `core` 工具集刻意保持精简，只包含：`execute_javascript`、`execute_scene_script`、`execute_editor_script`、`get_editor_state`、`get_tool_catalog`、`check_for_updates`、`get_selection`、`list_project_instructions`、`read_project_instruction`、`set_selection`、`get_project_info`、`get_build_status`、`create_scene`、`get_scene_info`、`get_hierarchy`、`list_scenes`、`open_scene`、`inspect_prefab`、`validate_prefab_references`、`inspect_prefab_instance`、`list_assets`、`inspect_asset`、`inspect_asset_dependencies`、`validate_asset_dependencies`、`open_asset`、`select_asset`、`run_script_diagnostics`、`get_recent_logs`、`search_project_logs`、`clear_logs`、`validate_scene`、`get_performance_snapshot`、`get_script_diagnostic_context`、`get_runtime_state`、`capture_editor_screenshot`、`capture_scene_screenshot`、`capture_preview_screenshot`、`list_editor_windows`。
+当前默认 `core` 工具集刻意保持精简，只包含：`execute_javascript`、`execute_scene_script`、`execute_editor_script`、`get_editor_state`、`get_tool_catalog`、`check_for_updates`、`get_selection`、`list_project_instructions`、`read_project_instruction`、`set_selection`、`get_project_info`、`get_build_status`、`get_preview_mode`、`create_scene`、`get_scene_info`、`get_hierarchy`、`list_scenes`、`open_scene`、`inspect_prefab`、`validate_prefab_references`、`inspect_prefab_instance`、`list_assets`、`inspect_asset`、`inspect_asset_dependencies`、`validate_asset_dependencies`、`open_asset`、`select_asset`、`run_script_diagnostics`、`get_recent_logs`、`search_project_logs`、`clear_logs`、`validate_scene`、`get_performance_snapshot`、`get_script_diagnostic_context`、`get_runtime_state`、`capture_editor_screenshot`、`capture_scene_screenshot`、`capture_preview_screenshot`、`list_editor_windows`。
+
+### 预览模式
+
+Creator 3.8.x 的预览自动化使用与内置预览工具栏相同的模式和编辑器 API：
+
+| 模式 | 行为 |
+|------|------|
+| `browser` | 在系统浏览器中打开场景；可用时，`get_preview_mode` 和 `run_project_preview` 会返回预览 URL。 |
+| `gameView` | 在 Cocos Creator 的 Game View 中启动场景。 |
+| `simulator` | 在原生模拟器中启动场景。 |
+
+使用 `get_preview_mode` 查询当前模式，使用 `set_preview_mode` 切换模式，使用 `run_project_preview` 启动预览。`run_project_preview` 仍兼容旧的 `platform` 参数，但该参数已弃用，推荐改用 `mode`。
 
 ## 内置 Resources
 
@@ -311,7 +323,7 @@ Funplay MCP for Cocos 延续 Funplay MCP for Unity 的设计原则，并针对 C
 
 ## 内置工具
 
-Funplay MCP for Cocos 当前在 `full` profile 下提供 **103 个工具函数**：
+Funplay MCP for Cocos 当前在 `full` profile 下提供 **105 个工具函数**：
 
 | 分类 | 工具 |
 |------|------|
@@ -327,7 +339,7 @@ Funplay MCP for Cocos 当前在 `full` profile 下提供 **103 个工具函数**
 | **动画** | `list_animations`, `add_animation_clip`, `play_animation`, `stop_animation` |
 | **文件** | `read_file`, `get_file_snippet`, `write_file`, `replace_in_file`, `search_files`, `list_directory`, `exists`, `refresh_assets` |
 | **诊断与日志** | `run_script_diagnostics`, `get_script_diagnostic_context`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_performance_snapshot` |
-| **构建与编辑器** | `get_build_status`, `open_build_panel`, `run_project_preview`, `save_current_scene`, `get_editor_preference`, `set_editor_preference`, `broadcast_editor_message` |
+| **构建与编辑器** | `get_build_status`, `get_preview_mode`, `set_preview_mode`, `open_build_panel`, `run_project_preview`, `save_current_scene`, `get_editor_preference`, `set_editor_preference`, `broadcast_editor_message` |
 | **运行态** | `get_runtime_state`, `pause_runtime`, `resume_runtime`, `set_time_scale` |
 | **交互与事件** | `emit_node_event`, `simulate_button_click`, `list_button_click_events`, `bind_button_click_event`, `invoke_component_method`, `simulate_mouse_click`, `simulate_mouse_drag`, `simulate_key_press`, `simulate_key_combo`, `simulate_preview_input` |
 | **截图与窗口** | `capture_desktop_screenshot`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_game_screenshot`, `capture_preview_screenshot`, `list_editor_windows` |

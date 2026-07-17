@@ -23,13 +23,14 @@ function createRegistry(profile, projectPath = path.resolve('/tmp/funplay-cocos-
 
 test('core profile exposes the documented focused tool set', () => {
   const tools = createRegistry('core').listTools();
-  assert.equal(tools.length, 38);
+  assert.equal(tools.length, 39);
   assert.equal(tools.some((tool) => tool.name === 'execute_javascript'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_editor_state'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_tool_catalog'), true);
   assert.equal(tools.some((tool) => tool.name === 'validate_scene'), true);
   assert.equal(tools.some((tool) => tool.name === 'inspect_asset_dependencies'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_build_status'), true);
+  assert.equal(tools.some((tool) => tool.name === 'get_preview_mode'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_performance_snapshot'), true);
   assert.equal(tools.some((tool) => tool.name === 'create_scene'), true);
   assert.equal(tools.some((tool) => tool.name === 'list_project_instructions'), true);
@@ -39,7 +40,7 @@ test('core profile exposes the documented focused tool set', () => {
 
 test('full profile exposes all built-in tools', () => {
   const tools = createRegistry('full').listTools();
-  assert.equal(tools.length, 103);
+  assert.equal(tools.length, 105);
   assert.equal(tools.some((tool) => tool.name === 'write_file'), true);
   assert.equal(tools.some((tool) => tool.name === 'edit_prefab_json'), true);
   assert.equal(tools.some((tool) => tool.name === 'create_prefab_from_node'), true);
@@ -47,6 +48,8 @@ test('full profile exposes all built-in tools', () => {
   assert.equal(tools.some((tool) => tool.name === 'create_cocos_mcp_project_skill'), true);
   assert.equal(tools.some((tool) => tool.name === 'bind_button_click_event'), true);
   assert.equal(tools.some((tool) => tool.name === 'open_build_panel'), true);
+  assert.equal(tools.some((tool) => tool.name === 'get_preview_mode'), true);
+  assert.equal(tools.some((tool) => tool.name === 'set_preview_mode'), true);
   assert.equal(tools.some((tool) => tool.name === 'create_scene'), true);
   assert.equal(tools.some((tool) => tool.name === 'broadcast_editor_message'), true);
   assert.equal(tools.some((tool) => tool.name === 'get_editor_state'), true);

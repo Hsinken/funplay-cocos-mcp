@@ -238,7 +238,7 @@ Try a higher-level prompt in your AI client:
 - The MCP server listens on `http://127.0.0.1:8765/` by default.
 - If the configured port is busy, the server automatically falls back to the next available port and the panel/client config use the actual running port.
 - `GET /health` and `GET /tools` are read-only debug endpoints for quick local checks outside an MCP client.
-- The default `core` profile exposes 38 high-signal tools. Switch to `full` for all 103 tools, or use `custom` to include/exclude tool categories and individual tools.
+- The default `core` profile exposes 39 high-signal tools. Switch to `full` for all 105 tools, or use `custom` to include/exclude tool categories and individual tools.
 - The panel checks GitHub releases automatically and also supports manual checks.
 - One-click update downloads the GitHub Release zip, verifies `SHA256SUMS.txt`, backs up the current extension, replaces the package files, and reloads the extension when the Cocos package API supports it. If reload is unavailable, restart Cocos Creator after installation. Git worktree and symlink installs are intentionally left to manual `git pull` or package replacement.
 - Streamable HTTP responses follow the MCP transport requirements for `Accept`, `MCP-Protocol-Version`, JSON-RPC notifications/responses, and optional `Mcp-Session-Id` sessions.
@@ -260,7 +260,7 @@ Try a higher-level prompt in your AI client:
 
 ## Highlights
 
-- **103 Built-in Tools** — Scene hierarchy, editor state, selection workflows, prefabs, assets, asset dependencies, project instructions, UI creation, components, files, logs, script diagnostics, screenshots, runtime control, build/preview helpers, editor preferences, event binding, and input simulation
+- **105 Built-in Tools** — Scene hierarchy, editor state, selection workflows, prefabs, assets, asset dependencies, project instructions, UI creation, components, files, logs, script diagnostics, screenshots, runtime control, build/preview helpers, editor preferences, event binding, and input simulation
 - **Primary Unified Tool** — `execute_javascript` supports both `scene` and `editor` contexts
 - **Resources & Prompts** — Live project/log resources plus reusable workflows like script fixing, scene validation, and playable prototype creation
 - **Cocos Panel UI** — A compact `Funplay > MCP Server` dashboard plus focused Tool Exposure, MCP Settings, and Activity windows for larger workflows
@@ -277,22 +277,34 @@ Funplay MCP for Cocos follows the same design principles as Funplay MCP for Unit
 | Embedded server | Built-in HTTP MCP server | Built-in HTTP MCP server |
 | Primary execution tool | `execute_javascript` | `execute_code` |
 | Primary language | JavaScript in scene/editor contexts | C# in Unity editor/runtime contexts |
-| Default profile | `core` with 38 tools | `core` focused tool profile |
-| Full profile | 103 tools plus `custom` exposure | 79 tools |
+| Default profile | `core` with 39 tools | `core` focused tool profile |
+| Full profile | 105 tools plus `custom` exposure | 79 tools |
 | Client setup | One-click config panel | One-click config window |
 
 ## MCP Capabilities
 
 The current package exposes four capability layers:
 
-- **Tools** — 38 tools in `core`, 103 tools in `full`, plus `custom` include/exclude rules and saved tool profiles
+- **Tools** — 39 tools in `core`, 105 tools in `full`, plus `custom` include/exclude rules and saved tool profiles
 - **Primary execution** — `execute_javascript` for scene/runtime and editor/browser automation
 - **Prompts** — `fix_script_errors`, `create_playable_prototype`, `scene_validation`, and `auto_wire_scene`
 - **Resources** — project context, scene summaries, current selection, script diagnostics, asset selection, logs, and MCP interaction history
 
 For the generated tool reference, including categories, profiles, and read/mutation hints, see [docs/TOOLS.md](./docs/TOOLS.md).
 
-The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `list_project_instructions`, `read_project_instruction`, `set_selection`, `get_project_info`, `get_build_status`, `create_scene`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `inspect_prefab`, `validate_prefab_references`, `inspect_prefab_instance`, `list_assets`, `inspect_asset`, `inspect_asset_dependencies`, `validate_asset_dependencies`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_performance_snapshot`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
+The default `core` set is intentionally small: `execute_javascript`, `execute_scene_script`, `execute_editor_script`, `get_editor_state`, `get_tool_catalog`, `check_for_updates`, `get_selection`, `list_project_instructions`, `read_project_instruction`, `set_selection`, `get_project_info`, `get_build_status`, `get_preview_mode`, `create_scene`, `get_scene_info`, `get_hierarchy`, `list_scenes`, `open_scene`, `inspect_prefab`, `validate_prefab_references`, `inspect_prefab_instance`, `list_assets`, `inspect_asset`, `inspect_asset_dependencies`, `validate_asset_dependencies`, `open_asset`, `select_asset`, `run_script_diagnostics`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_performance_snapshot`, `get_script_diagnostic_context`, `get_runtime_state`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_preview_screenshot`, and `list_editor_windows`.
+
+### Preview Modes
+
+Creator 3.8.x preview automation uses the same modes and editor APIs as the built-in preview toolbar:
+
+| Mode | Behavior |
+|------|----------|
+| `browser` | Opens the scene in the system browser; `get_preview_mode` and `run_project_preview` return the preview URL when available. |
+| `gameView` | Starts the scene inside Cocos Creator's Game View. |
+| `simulator` | Starts the scene in the native simulator. |
+
+Use `get_preview_mode` to inspect the active mode, `set_preview_mode` to switch it, and `run_project_preview` to start it. `run_project_preview` still accepts `platform` as a deprecated alias for `mode`.
 
 ## Built-in Resources
 
@@ -311,7 +323,7 @@ The default `core` set is intentionally small: `execute_javascript`, `execute_sc
 
 ## Built-in Tools
 
-Funplay MCP for Cocos currently ships with **103 tool functions** in the `full` profile:
+Funplay MCP for Cocos currently ships with **105 tool functions** in the `full` profile:
 
 | Category | Tools |
 |----------|-------|
@@ -327,7 +339,7 @@ Funplay MCP for Cocos currently ships with **103 tool functions** in the `full` 
 | **Animation** | `list_animations`, `add_animation_clip`, `play_animation`, `stop_animation` |
 | **Files** | `read_file`, `get_file_snippet`, `write_file`, `replace_in_file`, `search_files`, `list_directory`, `exists`, `refresh_assets` |
 | **Diagnostics & Logs** | `run_script_diagnostics`, `get_script_diagnostic_context`, `get_recent_logs`, `search_project_logs`, `clear_logs`, `validate_scene`, `get_performance_snapshot` |
-| **Build & Editor** | `get_build_status`, `open_build_panel`, `run_project_preview`, `save_current_scene`, `get_editor_preference`, `set_editor_preference`, `broadcast_editor_message` |
+| **Build & Editor** | `get_build_status`, `get_preview_mode`, `set_preview_mode`, `open_build_panel`, `run_project_preview`, `save_current_scene`, `get_editor_preference`, `set_editor_preference`, `broadcast_editor_message` |
 | **Runtime** | `get_runtime_state`, `pause_runtime`, `resume_runtime`, `set_time_scale` |
 | **Interaction & Events** | `emit_node_event`, `simulate_button_click`, `list_button_click_events`, `bind_button_click_event`, `invoke_component_method`, `simulate_mouse_click`, `simulate_mouse_drag`, `simulate_key_press`, `simulate_key_combo`, `simulate_preview_input` |
 | **Screenshots & Windows** | `capture_desktop_screenshot`, `capture_editor_screenshot`, `capture_scene_screenshot`, `capture_game_screenshot`, `capture_preview_screenshot`, `list_editor_windows` |

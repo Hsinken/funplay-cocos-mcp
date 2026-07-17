@@ -6,6 +6,20 @@ This project follows a simple changelog format inspired by [Keep a Changelog](ht
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-07-16
+
+### Added
+
+- Added `get_preview_mode` and `set_preview_mode` with explicit `browser`, `gameView`, and `simulator` semantics.
+
+### Changed
+
+- Reworked `run_project_preview` to use the Cocos Creator 3.8.x preview APIs, return the effective mode and browser preview URL, and retain `platform` as a deprecated alias for `mode`.
+
+### Fixed
+
+- Fixed preview launch on Cocos Creator 3.8.8 by replacing the nonexistent `preview.start`, `preview.open-preview`, and `builder.preview` messages.
+
 ## [0.4.2] - 2026-07-12
 
 ### Added
