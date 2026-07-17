@@ -232,16 +232,22 @@ Notes:
 
 ### 9. Publish To MCP Registry
 
-Log in if needed:
+The preferred organization-safe path is the GitHub Actions OIDC workflow. It
+uses the repository identity and does not require a saved Registry token:
 
 ```bash
-mcp-publisher login github
+gh workflow run publish-mcp-registry.yml \
+  -R FunplayAI/funplay-cocos-mcp \
+  -f release_ref=v<version>
 ```
 
-Publish:
+Wait for the workflow and verify it succeeds:
 
 ```bash
-mcp-publisher publish server.json
+gh run watch \
+  -R FunplayAI/funplay-cocos-mcp \
+  "$(gh run list -R FunplayAI/funplay-cocos-mcp \
+    --workflow publish-mcp-registry.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
 ```
 
 Verify latest:
